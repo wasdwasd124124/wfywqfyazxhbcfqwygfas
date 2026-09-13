@@ -1,1 +1,1264 @@
-# wfywqfyazxhbcfqwygfas
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ASN">
+<meta name="theme-color" content="#e4f3f0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600;700;800&display=swap">
+<title>ASN-style Prototype</title>
+<style>
+  /* ===============================================================
+     Device shell — logical resolution 440 x 956 (iPhone 17 Pro Max
+     @3x). Every measurement is a screenshot pixel / 3.
+     Palette traced from the source recording:
+       --green #1c7059  buttons, links, headings, positive
+       --mint  #e4f3f0  headers, keypad, active-tab wash
+       --red   #b93427  negative amounts
+       --wine  #6a112c  active tab icon + chevrons
+       --drop  #ee4734  logo mark
+     Account identity matches the source recording (Marco Meeuwsen);
+     balance set to ~29k per request. Third-party payee names anonymised.
+     =============================================================== */
+  :root {
+    --screen-w: 440px; --screen-h: 956px; --screen-radius: 55px; --bezel: 11px;
+    --safe-top: 62px; --safe-bottom: 34px;
+    --green:#1c7059; --green-dark:#175f4b; --mint:#e4f3f0; --mint-soft:#eef7f4;
+    --red:#b93427; --wine:#6a112c; --drop:#ee4734; --purple:#5b2a86;
+    --ink:#1b1b1f; --grey:#636363; --grey-2:#8a8a8e; --line:#e6e6e8;
+    --stage-bg:#16161a; --bezel-color:#1c1c1e; --bezel-edge:#3a3a3e;
+    --sans:"Mulish",-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+    --serif:"Lora","Iowan Old Style","Palatino Linotype","Georgia",serif;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; margin:0; background:var(--stage-bg); font-family:var(--sans); overflow:hidden; }
+  .stage { height:100%; display:grid; place-items:center; }
+  .device-scaler { transform:scale(var(--fit,1)); transform-origin:center; }
+  .device {
+    position:relative;
+    width:calc(var(--screen-w) + var(--bezel)*2); height:calc(var(--screen-h) + var(--bezel)*2);
+    padding:var(--bezel); background:var(--bezel-color);
+    border-radius:calc(var(--screen-radius) + var(--bezel));
+    box-shadow:0 0 0 1.5px var(--bezel-edge), 0 40px 80px -20px rgba(0,0,0,.7);
+  }
+  .viewport {
+    position:relative; width:var(--screen-w); height:var(--screen-h);
+    border-radius:var(--screen-radius); overflow:hidden; background:#fff; isolation:isolate;
+  }
+
+  /* ---- full-screen / installed-app mode (fills a real phone) ---- */
+  body.fs { --safe-top: max(env(safe-area-inset-top), 12px); --safe-bottom: max(env(safe-area-inset-bottom), 8px); background:var(--mint); }
+  body.fs .stage { place-items: stretch; height:100vh; height:100dvh; }
+  body.fs .device-scaler { transform: none !important; width:100%; height:100%; }
+  body.fs .device { width:100%; height:100vh; height:100dvh; padding:0; border-radius:0; box-shadow:none; background:var(--mint); }
+  body.fs .viewport { width:100%; height:100%; border-radius:0; }
+  body.fs .screen, body.fs .body { min-height:0; }
+  body.fs .chrome .status-bar, body.fs .dynamic-island, body.fs .home-indicator { display:none; }
+  body.fs .hint { display:none; }
+
+  /* ---- screens & transitions ---- */
+  .screen { position:absolute; inset:0; display:flex; flex-direction:column; background:#fff; overflow:hidden; }
+  .screen[hidden] { display:none; }
+  .screen.is-entering-push { animation:push-in 340ms cubic-bezier(.32,.72,0,1) both; z-index:5; }
+  .screen.is-leaving-push  { animation:push-out 340ms cubic-bezier(.32,.72,0,1) both; }
+  .screen.is-entering-pop  { animation:pop-in 340ms cubic-bezier(.32,.72,0,1) both; }
+  .screen.is-leaving-pop   { animation:pop-out 340ms cubic-bezier(.32,.72,0,1) both; z-index:5; }
+  .screen.is-entering-up   { animation:up-in 300ms cubic-bezier(.32,.72,0,1) both; z-index:6; }
+  .screen.is-leaving-up-out { animation:up-out 260ms ease-in both; z-index:6; }
+  @keyframes push-in  { from{transform:translateX(100%)} to{transform:translateX(0)} }
+  @keyframes push-out { from{transform:translateX(0);filter:brightness(1)} to{transform:translateX(-28%);filter:brightness(.82)} }
+  @keyframes pop-in   { from{transform:translateX(-28%);filter:brightness(.82)} to{transform:translateX(0);filter:brightness(1)} }
+  @keyframes pop-out  { from{transform:translateX(0)} to{transform:translateX(100%)} }
+  @keyframes up-in    { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  @keyframes up-out   { from{transform:translateY(0)} to{transform:translateY(100%)} }
+  @media (prefers-reduced-motion:reduce){ .screen[class*="is-"]{animation-duration:1ms} }
+
+  .body { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .body::-webkit-scrollbar { display:none; }
+
+  /* ---- app bar ---- */
+  .appbar { background:var(--mint); padding-top:var(--safe-top); flex:none; }
+  .appbar-row { height:52px; display:flex; align-items:center; gap:12px; padding:0 20px; }
+  .appbar-title { font-size:26px; font-weight:700; color:var(--ink); letter-spacing:-.4px; }
+  .appbar-title.serif { font-family:var(--serif); font-weight:400; color:var(--green); font-size:30px; }
+  .appbar-title.center { flex:1; text-align:center; font-size:19px; font-family:var(--serif); font-weight:400; color:var(--green); }
+  .appbar .spacer { flex:1; }
+  .iconbtn { width:30px; height:30px; display:grid; place-items:center; color:var(--ink); background:none; border:0; cursor:pointer; padding:0; }
+  .iconbtn.wine { color:var(--wine); }
+
+  /* ---- tab bar ---- */
+  .tabbar { flex:none; height:calc(58px + var(--safe-bottom)); padding-bottom:var(--safe-bottom); border-top:1px solid var(--line); display:flex; background:#fff; }
+  .tab { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; background:none; border:0; cursor:pointer; color:var(--grey); font-size:11px; padding:8px 0 0; }
+  .tab.active { color:var(--wine); }
+  .tab.active svg { fill:var(--wine); stroke:var(--wine); }
+  .tab svg { width:24px; height:24px; }
+
+  /* ---- generic rows ---- */
+  .section-label { font-size:16px; font-weight:700; color:var(--green); padding:22px 20px 8px; }
+  .chev-svg { color:var(--wine); flex:none; }
+  .row { display:flex; align-items:center; gap:14px; padding:14px 20px; background:#fff; cursor:pointer; border:0; width:100%; text-align:left; font-family:inherit; }
+  .row + .row, .row.divided { border-top:1px solid var(--line); }
+  .row .grow { min-width:0; flex:1; }
+  .row .title { font-size:16px; color:var(--ink); font-weight:700; }
+  .row .sub { font-size:13px; color:var(--grey); margin-top:2px; letter-spacing:.1px; }
+  .row .amt { font-size:15px; font-weight:600; color:var(--ink); white-space:nowrap; }
+  .row .amt.neg { color:var(--red); }
+  .row .chev { margin-left:auto; }
+  .lead-ico { width:30px; color:var(--green); flex:none; display:grid; place-items:center; }
+  .grp-gap { height:8px; }
+
+  /* ---- LOGIN ---- */
+  #screen-login { background:#fff; }
+  #screen-login .body { display:flex; flex-direction:column; padding-top:var(--safe-top); }
+  .login-top { display:flex; justify-content:flex-end; align-items:center; gap:16px; padding:8px 20px 0; }
+  .login-logo { margin-top:64px; display:flex; align-items:center; justify-content:center; gap:10px; }
+  .login-logo .word { font-size:34px; color:#4a4a4a; font-weight:400; letter-spacing:.5px; }
+  .login-sub { text-align:center; font-size:13px; color:#59595e; margin-top:2px; }
+  .login-sub b { color:var(--purple); font-weight:800; }
+  .greet { text-align:center; color:var(--green); font-weight:800; font-size:20px; margin-top:34px; }
+  .login-hint { text-align:center; color:#3d3d42; font-size:16px; margin-top:10px; }
+  .pins { display:flex; justify-content:center; gap:20px; margin-top:34px; }
+  .pin { width:19px; height:19px; border-radius:50%; border:2px solid var(--green); }
+  .pin.filled { background:var(--green); }
+  .keypad { margin-top:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:12px 12px calc(10px + var(--safe-bottom)); }
+  .key { height:70px; border:0; border-radius:8px; background:var(--mint); font-size:26px; color:var(--ink); font-family:inherit; cursor:pointer; display:grid; place-items:center; }
+  .key:active { background:#d6ece7; }
+  .key svg { width:30px; height:30px; color:var(--ink); }
+
+  /* ---- ACCOUNT DETAIL ---- */
+  .acct-head { background:var(--mint); padding:0 20px 16px; }
+  .acct-name { font-family:var(--serif); color:var(--green); font-size:22px; margin-top:2px; }
+  .acct-meta { display:flex; align-items:baseline; justify-content:space-between; margin-top:4px; }
+  .acct-iban { color:var(--green); font-weight:700; font-size:14px; letter-spacing:.3px; }
+  .acct-bal { color:var(--green); font-weight:700; font-size:15px; }
+  .acct-actions { display:flex; gap:12px; margin-top:14px; }
+  .btn { flex:1; height:44px; border:0; border-radius:24px; cursor:pointer; font-family:inherit; font-size:15px; font-weight:600; }
+  .btn-primary { background:var(--green); color:#fff; }
+  .btn-primary:active { background:var(--green-dark); }
+  .seg { display:flex; background:var(--mint); }
+  .seg button { flex:1; background:none; border:0; font-family:inherit; cursor:pointer; font-size:15px; color:var(--grey); padding:14px 0; position:relative; }
+  .seg button.active { color:var(--green); font-weight:700; }
+  .seg button.active::after { content:""; position:absolute; left:20px; right:20px; bottom:0; height:2px; background:var(--green); }
+  .panel[hidden] { display:none; }
+  .look-ahead { display:flex; align-items:center; padding:16px 20px; cursor:pointer; background:#f3f4f4; }
+  .look-ahead span { color:var(--green); font-size:16px; font-weight:700; }
+  .look-ahead .chev { margin-left:auto; }
+  .day-head { display:flex; justify-content:space-between; padding:18px 20px 8px; font-size:13px; color:var(--ink); font-weight:700; border-bottom:1px solid var(--line); }
+  .txn { display:flex; align-items:center; gap:12px; padding:14px 20px; background:#fff; border:0; width:100%; text-align:left; cursor:pointer; font-family:inherit; border-bottom:1px solid var(--line); }
+  .txn .grow { flex:1; min-width:0; }
+  .txn .t-main { font-size:15px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .txn .t-amt { font-size:15px; font-weight:600; white-space:nowrap; color:var(--ink); }
+  .pill { display:inline-block; font-size:14px; font-weight:600; padding:3px 9px; border-radius:6px; white-space:nowrap; color:#1a8124; border:1px solid #7fc98a; background:#eef8f0; }
+  .tag { display:inline-block; font-size:12px; color:#7a5a00; background:#f8ecc6; border:1px solid #e6cf8a; padding:2px 8px; border-radius:4px; margin-top:5px; }
+
+  /* ---- TRANSACTION DETAIL ---- */
+  .txd-amt { font-size:30px; font-weight:700; color:var(--ink); padding:18px 20px 2px; }
+  .txd-saldo { padding:0 20px 16px; color:var(--grey); font-size:13px; }
+  .txd-field { padding:12px 20px; border-top:1px solid var(--line); }
+  .txd-field .k { font-size:12.5px; color:var(--grey); }
+  .txd-field .v { font-size:15px; color:var(--ink); margin-top:3px; line-height:1.4; }
+  .txd-field .v .cat { display:inline-flex; align-items:center; gap:8px; }
+  .txd-more { color:var(--green); font-weight:600; font-size:14px; padding:10px 0 2px; cursor:pointer; }
+  .txd-action { display:flex; align-items:center; padding:16px 20px; cursor:pointer; border-top:1px solid var(--line); font-size:15px; color:var(--ink); }
+  .txd-action svg { margin-left:auto; color:var(--green); }
+  .txd-cta { padding:18px 20px; }
+  .btn-soft { width:100%; height:46px; border:0; border-radius:24px; background:#eceef0; color:#9a9a9f; font-size:15px; font-weight:600; font-family:inherit; }
+
+  /* ---- detail-list (Rekeningdetails) ---- */
+  .kv { padding:14px 20px; border-top:1px solid var(--line); display:flex; align-items:flex-start; }
+  .kv .grow { flex:1; }
+  .kv .k { font-size:13px; color:var(--grey); }
+  .kv .v { font-size:16px; color:var(--ink); margin-top:3px; font-weight:600; }
+  .kv .big { font-size:26px; font-weight:700; }
+  .kv .act { color:var(--green); flex:none; }
+  .detail-head { font-size:16px; font-weight:700; color:var(--green); padding:20px 20px 2px; }
+
+  /* ---- banners / info text ---- */
+  .info-p { padding:16px 20px 4px; font-size:15px; color:var(--ink); line-height:1.45; }
+  .info-p a { color:var(--wine); text-decoration:underline; }
+  .moved-banner { margin:12px 16px 4px; background:#fbe9d9; border-radius:12px; padding:14px; display:flex; gap:12px; position:relative; }
+  .moved-banner .x { position:absolute; top:10px; right:12px; color:#8a7a68; cursor:pointer; font-size:16px; }
+  .empty { display:flex; flex-direction:column; align-items:center; gap:16px; padding:40px 24px; text-align:center; color:var(--ink); font-size:15px; }
+
+  /* ---- smiley rating ---- */
+  .smilies { display:flex; gap:14px; padding:10px 20px 4px; }
+  .smilies svg { width:34px; height:34px; }
+
+  /* ---- OVERBOEKEN sheet ---- */
+  #screen-overboeken { background:rgba(0,0,0,.25); justify-content:flex-end; }
+  #screen-overboeken .sheet { background:#fff; border-radius:22px 22px 0 0; height:94%; display:flex; flex-direction:column; overflow:hidden; }
+  .sheet-bar { background:var(--mint); padding-top:16px; }
+  .sheet-bar .row1 { display:flex; align-items:center; padding:0 18px 14px; }
+  .sheet-bar .row1 .t { flex:1; text-align:center; font-family:var(--serif); color:var(--green); font-size:19px; margin-right:24px; }
+  .ovb-amt { text-align:center; font-size:34px; font-weight:700; color:var(--ink); padding:22px 0 20px; }
+  .ovb-vn { display:flex; align-items:center; gap:10px; padding:0 20px; }
+  .ovb-card { flex:1; background:var(--mint-soft); border-radius:14px; padding:14px; min-height:74px; display:flex; flex-direction:column; justify-content:center; }
+  .ovb-card .lab { font-size:12px; color:var(--grey); }
+  .ovb-card .nm { font-size:13.5px; color:var(--ink); font-weight:600; margin-top:2px; line-height:1.2; }
+  .ovb-card .bl { font-size:12.5px; color:var(--grey); margin-top:3px; }
+  .ovb-plus { flex:1; background:var(--mint-soft); border-radius:14px; min-height:74px; display:grid; place-items:center; color:var(--drop); }
+  .ovb-vnlabels { display:flex; padding:8px 20px 0; }
+  .ovb-vnlabels span { flex:1; text-align:center; font-size:13px; color:var(--grey); }
+  .ovb-arrow { width:34px; text-align:center; color:var(--grey-2); }
+  .ovb-field { padding:16px 20px 6px; }
+  .ovb-field .k { font-size:13px; color:var(--grey); }
+  .ovb-field .v { font-size:16px; color:var(--ink); border-bottom:1px solid var(--line); padding:8px 0; }
+  .ovb-cta { margin-top:auto; padding:16px 16px calc(14px + var(--safe-bottom)); }
+
+  /* ---- toggles / steppers / cards (phase 3) ---- */
+  .switch { width:46px; height:27px; border-radius:14px; background:#c8c8cc; position:relative; flex:none; cursor:pointer; transition:background .18s; }
+  .switch.on { background:var(--green); }
+  .switch::after { content:""; position:absolute; top:3px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.3); transition:left .18s; }
+  .switch.on::after { left:22px; }
+  .chkbox.off { background:#fff !important; border:2px solid var(--grey-2); }
+  .chkbox.off svg { display:none; }
+  .toggle-row { display:flex; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line); }
+  .toggle-row .grow { flex:1; }
+  .toggle-row .tt { font-size:16px; color:var(--ink); }
+  .toggle-row .ts { font-size:13px; color:var(--grey); margin-top:2px; }
+  .link-green { color:var(--green); font-weight:600; font-size:14px; padding:12px 20px; cursor:pointer; }
+  .acctline { display:flex; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line); }
+  .acctline .grow { flex:1; }
+  .acctline .nm { font-size:16px; color:var(--ink); }
+  .acctline .ib { font-size:13px; color:var(--grey); margin-top:2px; }
+  .acctline .ed { color:var(--wine); flex:none; cursor:pointer; }
+  .stepper { display:flex; align-items:center; gap:0; padding:14px 24px 6px; }
+  .stepper .dot { width:22px; height:22px; border-radius:50%; border:2px solid var(--wine); color:var(--wine); font-size:12px; font-weight:700; display:grid; place-items:center; flex:none; }
+  .stepper .dot.off { border-color:#d0d0d4; color:#d0d0d4; }
+  .stepper .bar { flex:1; height:2px; background:#d0d0d4; }
+  .peach-card { margin:8px 20px; background:#fbe9d9; border-radius:12px; padding:16px; font-size:14px; color:#3a2a1a; line-height:1.5; }
+  .peach-card a { color:var(--wine); text-decoration:underline; }
+  .search-bar { margin:12px 20px; display:flex; align-items:center; gap:8px; background:#f0f1f2; border-radius:10px; padding:11px 14px; color:var(--grey-2); font-size:15px; }
+  .lim-cards { display:flex; gap:12px; padding:14px 20px 4px; }
+  .lim-card { flex:1; border:2px solid var(--line); border-radius:12px; padding:14px 12px; display:flex; flex-direction:column; gap:8px; align-items:flex-start; cursor:pointer; }
+  .lim-card.on { border-color:var(--wine); }
+  .lim-card .lc-t { font-size:14px; color:var(--ink); font-weight:600; line-height:1.2; }
+  .pillseg { display:inline-flex; gap:8px; padding:8px 20px 4px; }
+  .pillseg button { border:0; border-radius:16px; padding:7px 16px; font-family:inherit; font-size:14px; cursor:pointer; background:#eceef0; color:var(--ink); }
+  .pillseg button.on { background:var(--wine); color:#fff; }
+  .bullets { padding:8px 20px 4px; }
+  .bullets .q { font-size:15px; color:var(--ink); font-weight:600; margin-bottom:6px; }
+  .bullets ul { margin:0; padding-left:18px; color:#2a2a2e; font-size:14px; line-height:1.5; }
+  .lim-block { padding:14px 20px 4px; border-top:1px solid var(--line); }
+  .lim-block .h { color:var(--green); font-weight:700; font-size:15px; margin-bottom:8px; }
+  .lim-block .kk { font-size:13px; color:var(--grey); margin-top:8px; }
+  .lim-block .vv { font-size:16px; color:var(--ink); }
+  .lim-block .wz { color:var(--wine); text-decoration:underline; font-size:14px; margin-top:2px; display:inline-block; }
+  .prod-row .lead-ico { width:36px; }
+
+  /* ---- chrome ---- */
+  .chrome { position:absolute; inset:0; pointer-events:none; z-index:30; }
+  .status-bar { position:absolute; top:0; left:0; right:0; height:var(--safe-top); display:flex; align-items:center; justify-content:space-between; padding:0 34px 6px; color:#000; font:600 17px/1 var(--sans); letter-spacing:.2px; }
+  .status-bar .right { display:flex; align-items:center; gap:6px; }
+  .dynamic-island { position:absolute; top:12px; left:50%; transform:translateX(-50%); width:126px; height:37px; background:#000; border-radius:20px; }
+  .home-indicator { position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:148px; height:5px; border-radius:3px; background:rgba(0,0,0,.85); }
+
+  /* ---- demo helpers ---- */
+  .hint { position:fixed; bottom:14px; left:50%; transform:translateX(-50%); font:12px var(--sans); color:#7a7a86; letter-spacing:.3px; }
+  .hint b { color:#b9b9c4; }
+  .index-overlay { position:fixed; inset:0; background:rgba(10,10,12,.94); display:none; place-items:center; z-index:100; padding:40px; }
+  .index-overlay[open] { display:grid; }
+  .index-overlay ol { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:8px; max-width:820px; width:100%; margin:0; padding:0; list-style:none; max-height:84vh; overflow:auto; }
+  .index-overlay button { width:100%; text-align:left; padding:10px 14px; background:#232329; color:#e6e6ea; border:1px solid #34343c; border-radius:8px; font:13px var(--sans); cursor:pointer; }
+  .index-overlay button:hover { background:#2d2d35; }
+</style>
+</head>
+<body>
+<div class="stage"><div class="device-scaler"><div class="device"><div class="viewport" id="viewport">
+
+<!-- svg symbols -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="chev"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g id="back"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g id="search"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-3.2-3.2" stroke="currentColor" stroke-width="1.8"/></g>
+  <g id="extlink"><path d="M14 4h6v6M20 4l-9 9M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+</defs></svg>
+
+<!-- ========================= LOGIN ========================= -->
+<section class="screen" id="screen-login" data-title="Login (pincode)">
+  <div class="body">
+    <div class="login-top">
+      <button class="iconbtn" aria-label="QR"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3Zm2 2v4h4V5H5Zm8-2h8v8h-8V3Zm2 2v4h4V5h-4ZM3 13h8v8H3v-8Zm2 2v4h4v-4H5Zm10-2h2v2h-2v-2Zm4 0h2v2h-2v-2Zm-4 4h2v2h-2v-2Zm2 2h2v2h-2v-2Zm2-2h2v2h-2v-2Z"/></svg></button>
+      <button class="iconbtn" aria-label="Profiel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
+    </div>
+    <div class="login-logo">
+      <span class="word">asn</span>
+      <svg width="42" height="40" viewBox="0 0 42 40" aria-hidden="true">
+        <path d="M21 3c6 5 10 9 10 16 0 7-5 12-11 12-2 0-4-1-4-3 0-3 4-3 4-7 0-3-3-4-3-8 0-4 2-7 4-10Z" fill="#ee4734"/>
+        <path d="M15 15c-3 2-5 5-5 9 0 6 5 10 11 10-5-1-8-4-8-9 0-4 1-7 2-10Z" fill="#c62f22"/>
+      </svg>
+      <span class="word">bank</span>
+    </div>
+    <div class="login-sub">voorheen <b>SNS</b></div>
+    <div class="greet">Goedemorgen Marco</div>
+    <div class="login-hint">Log in met je mobiele pincode</div>
+    <div class="pins" id="pins"><div class="pin"></div><div class="pin"></div><div class="pin"></div><div class="pin"></div><div class="pin"></div></div>
+    <div class="keypad" id="keypad">
+      <button class="key" data-d="1">1</button><button class="key" data-d="2">2</button><button class="key" data-d="3">3</button>
+      <button class="key" data-d="4">4</button><button class="key" data-d="5">5</button><button class="key" data-d="6">6</button>
+      <button class="key" data-d="7">7</button><button class="key" data-d="8">8</button><button class="key" data-d="9">9</button>
+      <button class="key" data-face aria-label="Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 9v4l-1 1M9.5 15c1.5 1 3.5 1 5 0"/></svg></button>
+      <button class="key" data-d="0">0</button>
+      <button class="key" data-del aria-label="Wissen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6H9.5a2 2 0 0 0-1.5.7L3 12l5 5.3a2 2 0 0 0 1.5.7H20a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Z"/><path d="M12 10l4 4M16 10l-4 4"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= OVERZICHT ======================= -->
+<section class="screen" id="screen-overzicht" data-title="Overzicht (home)">
+  <div class="appbar"><div class="appbar-row">
+    <div class="appbar-title">Overzicht</div><div class="spacer"></div>
+    <button class="iconbtn" aria-label="QR"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3Zm2 2v4h4V5H5Zm8-2h8v8h-8V3Zm2 2v4h4V5h-4ZM3 13h8v8H3v-8Zm2 2v4h4v-4H5Zm10-2h2v2h-2v-2Zm4 0h2v2h-2v-2Zm-4 4h2v2h-2v-2Zm2 2h2v2h-2v-2Zm2-2h2v2h-2v-2Z"/></svg></button>
+    <button class="iconbtn wine" aria-label="Uitloggen" data-lock><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
+  </div></div>
+  <div class="body">
+    <div class="moved-banner" style="background:#fbe9d9">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px;color:#3a2a1a">Ontdek de app</div>
+        <div style="font-size:12.5px;color:#5a4a38;margin-top:3px;line-height:1.35">Start de tour en bekijk de belangrijkste functies op je overzicht.</div>
+        <div style="color:var(--green);font-weight:600;font-size:13px;margin-top:6px">Ontdek meer</div>
+      </div>
+      <svg width="54" height="46" viewBox="0 0 54 46" aria-hidden="true"><rect x="30" y="8" width="18" height="30" rx="3" fill="#2f9e6f"/><circle cx="16" cy="26" r="11" fill="#f4a63a"/><path d="M6 40q10-14 22-4" stroke="#2f9e6f" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+      <div style="position:absolute;top:8px;right:12px;color:#8a7a68;font-weight:800;letter-spacing:1px">···</div>
+    </div>
+    <div style="display:flex;gap:6px;justify-content:center;margin-top:8px">
+      <span style="width:16px;height:5px;border-radius:3px;background:#c88f5f"></span>
+      <span style="width:5px;height:5px;border-radius:3px;background:#e2c4a8"></span>
+      <span style="width:5px;height:5px;border-radius:3px;background:#e2c4a8"></span>
+    </div>
+
+    <div class="section-label" style="color:var(--ink)">Betalen</div>
+    <button class="row" data-goto="account">
+      <div class="grow"><div class="title">Marco Meeuwsen PRIVEREKENING</div><div class="sub">NL48 SNSB 0948 2771 14</div></div>
+      <div class="amt">&euro; 31.196,72</div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+    </button>
+    <button class="row">
+      <div class="grow"><div class="title">SNS Basis</div><div class="sub">NL39 SNSB 8847 6357 21</div></div>
+      <div class="amt neg">&euro; -12,15</div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+    </button>
+    <button class="row">
+      <span class="lead-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="18" cy="17" r="3"/></svg></span>
+      <div class="grow"><div class="title">Je betaalverzoeken</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+    </button>
+
+    <div class="section-label" style="color:var(--ink)">Sparen</div>
+    <button class="row">
+      <div class="grow"><div class="title">Marco Meeuwsen SPAARREKENING</div><div class="sub">NL66 SNSB 8814 8162 55</div></div>
+      <div class="amt">&euro; 0,55</div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+    </button>
+    <div style="display:flex;gap:22px;padding:8px 20px 2px">
+      <span style="width:34px;height:34px;border-radius:50%;background:var(--mint);display:grid;place-items:center;color:var(--green)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+      <span style="width:34px;height:34px;border-radius:50%;background:var(--mint);display:grid;place-items:center;color:var(--green)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg></span>
+    </div>
+
+    <div class="section-label" style="color:var(--ink)">Inzicht in je geld</div>
+    <button class="row">
+      <span class="lead-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 8 8h-8Z" fill="currentColor" stroke="none"/></svg></span>
+      <div class="grow"><div class="title">Inkomsten en uitgaven</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+    </button>
+    <button class="row">
+      <span class="lead-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 14l3-3 2 2 3-4"/></svg></span>
+      <div class="grow"><div class="title">Budgetten</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+    </button>
+    <button class="row">
+      <span class="lead-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 15l5-5 3 3 6-7"/><path d="M4 20h16"/></svg></span>
+      <div class="grow"><div class="title">Saldografiek</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+    </button>
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--green);font-weight:600;font-size:14px;padding:18px 0 22px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Overzicht aanpassen
+    </div>
+  </div>
+  <nav class="tabbar" data-tabs="overzicht"></nav>
+</section>
+
+<!-- ==================== ACCOUNT DETAIL ==================== -->
+<section class="screen" id="screen-account" data-title="Account detail">
+  <div class="appbar">
+    <div class="appbar-row">
+      <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+      <div class="spacer"></div>
+      <button class="iconbtn" aria-label="Zoeken"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#search"/></svg></button>
+    </div>
+    <div class="acct-head">
+      <div class="acct-name">Marco Meeuwsen PRIVEREKENING</div>
+      <div class="acct-meta"><span class="acct-iban">NL48 SNSB 0948 2771 14</span><span class="acct-bal">&euro; 31.196,72</span></div>
+      <div class="acct-actions"><button class="btn btn-primary" data-goto="overboeken">Overboeken</button><button class="btn btn-primary">Betaalverzoek</button></div>
+    </div>
+    <div class="seg" id="acct-seg">
+      <button class="active" data-seg="txns">Bij en af</button>
+      <button data-seg="manage">Zelf regelen</button>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- panel: transactions -->
+    <div class="panel" data-panel="txns">
+      <div class="look-ahead"><span>Kijk vooruit</span><svg class="chev chev-svg" width="22" height="22" viewBox="0 0 24 24"><use href="#chev"/></svg></div>
+      <div class="day-head"><span>Vandaag - 13 september</span><span>&euro;</span></div>
+      <button class="txn" data-desc="Revolut**6007*&nbsp;&nbsp;&gt;Dublin GBP 25,00 KV001 Koers: 0,8532423&nbsp;&nbsp;IERLAND 565338 20260908 12:34:56"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin GBP 25,00 KV0&hellip;</div></div><div class="t-amt">-29,71</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin GBP 75,00 KV0&hellip;</div></div><div class="t-amt">-89,13</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Albert Heijn 1234&nbsp;&nbsp;&gt;GOIRLE</div></div><div class="t-amt">-14,37</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 13.09.2026 8U47 K&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>12 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Jumbo Goirle 8821</div></div><div class="t-amt">-23,84</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 12.09.2026 9U12 K&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>11 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">NS GROEP IZ Reisproduct</div></div><div class="t-amt">-11,60</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Bakkerij Van Erp</div></div><div class="t-amt">-4,20</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 11.09.2026 8U55 K&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>10 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Spotify AB</div></div><div class="t-amt">-11,99</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Etos 8842 Tilburg</div></div><div class="t-amt">-8,45</div></button>
+      <div class="day-head"><span>9 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CMK Van Aarle</div></div><div class="t-amt">-1.000,00</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Albert Heijn 1234&nbsp;&nbsp;&gt;GOIRLE</div></div><div class="t-amt">-31,62</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 9.09.2026 8U38 K&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>8 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Thuisbezorgd.nl</div></div><div class="t-amt">-18,50</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">bol.com b.v.</div></div><div class="t-amt">-12,99</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 08.09.2026 12U58&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>7 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">HEMA Tilburg Centrum</div></div><div class="t-amt">-6,75</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Kruidvat 3311 Goirle</div></div><div class="t-amt">-9,28</div></button>
+      <div class="day-head"><span>6 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Gall &amp; Gall Goirle</div></div><div class="t-amt">-14,49</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Albert Heijn 1234&nbsp;&nbsp;&gt;GOIRLE</div></div><div class="t-amt">-9,15</div></button>
+      <div class="day-head"><span>5 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Domino's Pizza Tilburg</div></div><div class="t-amt">-21,90</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">PostNL Pakketpunt</div></div><div class="t-amt">-4,15</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 05.09.2026 8U50&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>4 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Jumbo Goirle 8821</div></div><div class="t-amt">-16,28</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Action 1205 Goirle</div></div><div class="t-amt">-7,64</div></button>
+      <div class="day-head"><span>3 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">VALVE CORPORATION via Nuvei</div></div><div class="t-amt">-12,82</div></button>
+      <div class="day-head"><span>2 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Amazon Prime Video UK iDeal</div></div><div class="t-amt">-5,99</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 2.09.2026 9U44 K&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>1 september</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">APPLE.COM/BILL&nbsp;&nbsp;&gt;ITUNES.CO 1.09.2026 12U&hellip;</div></div><div class="t-amt">-1,99</div></button>
+      <div class="day-head"><span>28 augustus</span><span></span></div>
+      <button class="txn" data-desc="MoonPay&nbsp;&nbsp;&gt;TRX (TRON) aankoop&nbsp;&nbsp;iDEAL MOONPAY 4589122 20260828 10:14:52"><div class="grow"><div class="t-main">MoonPay&nbsp;&nbsp;&gt;TRX aankoop&hellip;</div></div><div class="t-amt">-3.500,00</div></button>
+      <div class="day-head"><span>27 augustus</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">LINFOSYS B V</div></div><span class="pill">+2.243,00</span></button>
+      <div class="day-head"><span>23 augustus</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CAK</div></div><div class="t-amt">-100,00</div></button>
+      <div class="day-head"><span>20 augustus</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CMK Van Aarle</div></div><div class="t-amt">-1.000,00</div></button>
+      <div class="day-head"><span>19 augustus</span><span></span></div>
+      <button class="txn" data-desc="Revolut**6007*&nbsp;&nbsp;&gt;Dublin 19.08.2026 19U52 EUR 59,46 Apple Pay betaling"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin 19.08.2026 19U52&hellip;</div></div><div class="t-amt">-59,46</div></button>
+      <button class="txn" data-desc="Revolut**6007*&nbsp;&nbsp;&gt;Dublin 19.08.2026 18U30 EUR 109,00 Apple Pay betaling"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin 19.08.2026 18U30&hellip;</div></div><div class="t-amt">-109,00</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">CZ Groep Zorgverzekeraar</div></div><div class="t-amt">-148,95</div></button>
+      <button class="txn" data-desc="Revolut**6007*&nbsp;&nbsp;&gt;Dublin 19.08.2026 15U22 EUR 50,00 Apple Pay betaling"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin 19.08.2026 15U22&hellip;</div></div><div class="t-amt">-50,00</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">LINFOSYS B V</div></div><span class="pill">+2.080,03</span></button>
+      <div class="day-head"><span>18 augustus</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Amazon EU SARL</div><span class="tag">Wordt teruggeboekt</span></div><div class="t-amt">-4,99</div></button>
+      <div class="day-head"><span>16 augustus</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Xsolla (USA) Inc</div></div><div class="t-amt">-5,99</div></button>
+      <button class="txn" data-desc="Revolut**6007*&nbsp;&nbsp;&gt;Dublin 16.08.2026 17U09 EUR 143,94 Apple Pay betaling"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin 16.08.2026 17U09&hellip;</div></div><div class="t-amt">-143,94</div></button>
+      <div class="day-head"><span>1 augustus</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CHRISTELIJKE MUTUALITEIT</div></div><div class="t-amt">-29,97</div></button>
+      <div class="day-head"><span>25 juli</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CAK</div></div><div class="t-amt">-100,00</div></button>
+      <div class="day-head"><span>6 juli</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-74,50</div></button>
+      <div class="day-head"><span>3 mei</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CHRISTELIJKE MUTUALITEIT</div></div><div class="t-amt">-29,97</div></button>
+      <div class="day-head"><span>20 april</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-366,89</div></button>
+      <div class="day-head"><span>19 april</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Mediahuis Nederland B.V.</div></div><div class="t-amt">-7,58</div></button>
+      <div class="day-head"><span>29 maart</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Amazon EU SARL</div></div><div class="t-amt">-4,99</div></button>
+      <div class="day-head"><span>15 maart</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Mediahuis Nederland B.V.</div></div><div class="t-amt">-7,58</div></button>
+      <div class="day-head"><span>8 maart</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-35,44</div></button>
+      <div class="day-head"><span>2 maart</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CHRISTELIJKE MUTUALITEIT</div></div><div class="t-amt">-29,97</div></button>
+      <div class="day-head"><span>14 februari</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Mediahuis Nederland B.V.</div></div><div class="t-amt">-7,58</div></button>
+      <div class="day-head"><span>7 februari</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-34,44</div></button>
+      <div class="day-head"><span>10 december 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-34,44</div></button>
+      <div class="day-head"><span>11 november 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-34,44</div></button>
+      <div class="day-head"><span>29 oktober 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-34,44</div></button>
+      <div class="day-head"><span>27 oktober 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CZ Groep Zorgverzekeraar</div></div><div class="t-amt">-156,69</div></button>
+      <div class="day-head"><span>16 oktober 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CZ Groep Zorgverzekeraar</div></div><div class="t-amt">-156,69</div></button>
+      <div class="day-head"><span>29 september 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CZ Groep Zorgverzekeraar</div></div><div class="t-amt">-156,69</div></button>
+      <div class="day-head"><span>27 augustus 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CZ Groep Zorgverzekeraar</div></div><div class="t-amt">-156,69</div></button>
+      <div class="day-head"><span>12 augustus 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-33,25</div></button>
+      <div class="day-head"><span>30 juli 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CZ Groep Zorgverzekeraar</div></div><div class="t-amt">-67,90</div></button>
+      <div class="day-head"><span>28 juli 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CZ Groep Zorgverzekeraar</div></div><div class="t-amt">-156,69</div></button>
+      <div class="day-head"><span>9 juli 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-33,25</div></button>
+      <div class="day-head"><span>24 juni 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">NETFLIX INTERNATIONAL B.V.</div></div><div class="t-amt">-18,99</div></button>
+      <div class="day-head"><span>12 juni 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-33,25</div></button>
+      <div class="day-head"><span>6 juni 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-33,25</div></button>
+      <div class="day-head"><span>30 mei 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">NETFLIX INTERNATIONAL B.V.</div></div><div class="t-amt">-18,99</div></button>
+      <div class="day-head"><span>23 mei 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">NETFLIX INTERNATIONAL B.V.</div></div><div class="t-amt">-18,99</div></button>
+      <div class="day-head"><span>30 april 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Imkey BV via Mollie</div></div><div class="t-amt">-24,95</div></button>
+      <div class="day-head"><span>23 april 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Imkey BV via Mollie</div></div><div class="t-amt">-24,95</div></button>
+      <div class="day-head"><span>10 april 2025</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div></div><div class="t-amt">-33,25</div></button>
+      <div style="height:14px"></div>
+    </div>
+    <!-- panel: manage -->
+    <div class="panel" data-panel="manage" hidden>
+      <button class="row divided" data-goto="rekeningdetails"><div class="grow"><div class="title">Rekeningdetails</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+      <button class="row" data-goto="betaalpassen"><div class="grow"><div class="title">Betaalpassen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+      <button class="row" data-goto="ingeplande"><div class="grow"><div class="title">Ingeplande overboekingen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+      <button class="row" data-goto="incassos"><div class="grow"><div class="title">Incasso's beheren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+      <button class="row" data-goto="weergave"><div class="grow"><div class="title">Weergave rekeningen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    </div>
+  </div>
+  <nav class="tabbar" data-tabs="overzicht"></nav>
+</section>
+
+<!-- ================== TRANSACTION DETAIL ================== -->
+<section class="screen" id="screen-txn" data-title="Transactie detail">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Details</div>
+    <button class="iconbtn" aria-label="Zoeken"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#search"/></svg></button>
+  </div></div>
+  <div class="body">
+    <div class="txd-amt" id="txd-amt">&euro; -29,71</div>
+    <div class="txd-saldo" id="txd-saldo">Saldo na boeking &euro; 31.196,72</div>
+    <div class="txd-field" id="txd-party" hidden><div class="k" id="txd-party-k">Van</div><div class="v" style="display:flex;align-items:flex-start"><div class="grow"><div id="txd-party-name" style="font-weight:600">&nbsp;</div><div id="txd-party-iban" style="font-size:13px;color:var(--grey);margin-top:2px">&nbsp;</div></div><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--wine)" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="10" r="2.4"/><path d="M8 17a4 4 0 0 1 8 0"/><path d="M19 6v4M17 8h4"/></svg></div></div>
+    <div class="txd-field"><div class="k">Datum en tijd</div><div class="v" id="txd-date">Vandaag - 13 september 09:07</div></div>
+    <div class="txd-field"><div class="k">Categorie</div><div class="v"><span class="cat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--grey)" stroke-width="1.7"><path d="M3 12l8-8h8v8l-8 8z"/><circle cx="15" cy="9" r="1.3" fill="var(--grey)" stroke="none"/></svg><span id="txd-cat">Internet, TV &amp; bellen</span></span></div></div>
+    <div class="txd-field"><div class="k">Omschrijving</div><div class="v" id="txd-desc">Revolut**6007*&nbsp;&nbsp;&gt;Dublin GBP 25,00 KV001 Koers: 0,8532423&nbsp;&nbsp;IERLAND 565338 20260908 12:34:56</div></div>
+    <div class="txd-field"><div class="k">Type</div><div class="v" id="txd-type">Betaling</div></div>
+    <div class="txd-action">Categorie aanpassen<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+    <div class="txd-action">Pdf delen of downloaden<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M5 21h14"/></svg></div>
+    <div class="txd-action">Vergelijkbare bij- en afschrijvingen<svg width="20" height="20" viewBox="0 0 24 24"><use href="#search"/></svg></div>
+    <div class="txd-cta"><button class="btn-soft">Betaalverzoek</button></div>
+  </div>
+  <nav class="tabbar" data-tabs="overzicht"></nav>
+</section>
+
+<!-- ==================== REKENINGDETAILS ==================== -->
+<section class="screen" id="screen-rekeningdetails" data-title="Rekeningdetails">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Rekeningdetails</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="kv"><div class="grow"><div class="k">Saldo</div><div class="v big">&euro; 31.196,72</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Limiet rood staan</div><div class="v">&euro; 0,00</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Product</div><div class="v">SNS Studentenrekening</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Rekeningnaam</div><div class="v">Marco Meeuwsen PRIVEREKENING</div></div><svg class="act" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+    <div class="kv"><div class="grow"><div class="k">Rekeningnummer</div><div class="v">NL48 SNSB 0948 2771 14</div></div><svg class="act" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></div>
+    <div class="kv"><div class="grow"><div class="k">Bankcode (BIC/SWIFT)</div><div class="v">SNSBNL2A</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Rekeninghouder</div><div class="v">MMCGA Meeuwsen</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Opgebouwde rente</div><div class="v">&euro; 0,00 per maand</div></div></div>
+    <div class="detail-head">Rente</div>
+    <div class="kv"><div class="grow"><div class="k">Te betalen rente</div><div class="v">&euro; 0,00 per maand</div></div></div>
+    <div class="kv"><div class="grow"><div class="v" style="font-weight:400;font-size:15px">7,00% rente op jaarbasis</div></div></div>
+    <div class="txd-action" style="color:var(--ink)">Productvoorwaarden<svg width="20" height="20" viewBox="0 0 24 24"><use href="#extlink"/></svg></div>
+    <div style="height:20px"></div>
+  </div>
+  <nav class="tabbar" data-tabs="overzicht"></nav>
+</section>
+
+<!-- ===================== BETAALPASSEN ===================== -->
+<section class="screen" id="screen-betaalpassen" data-title="Betaalpassen">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Betaalpassen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <button class="row" data-goto="kiesrekening" style="margin:16px 20px 4px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;width:calc(100% - 40px)">
+      <div class="grow"><div class="title" style="font-size:16px">Marco Meeuwsen PRIVEREKENING</div><div class="sub" style="color:var(--green);font-weight:600">NL48 SNSB 0948 2771 14</div></div>
+      <svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+    </button>
+    <div class="section-label">Betaalpas</div>
+    <div class="row" style="cursor:default">
+      <div style="width:56px;height:38px;border-radius:6px;background:linear-gradient(135deg,#1c7059,#2f9e6f);flex:none;display:grid;place-items:center">
+        <svg width="20" height="20" viewBox="0 0 42 40"><path d="M21 3c6 5 10 9 10 16 0 7-5 12-11 12-2 0-4-1-4-3 0-3 4-3 4-7 0-3-3-4-3-8 0-4 2-7 4-10Z" fill="#fff"/></svg>
+      </div>
+      <div class="grow"><div class="title">MEEUWSEN M M C G A</div><div class="sub">Pasnummer 005</div></div>
+    </div>
+    <div class="section-label">Veiligheid</div>
+    <button class="row divided"><div class="grow"><div class="title">Betaalpas blokkeren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <div class="section-label">Aanvragen</div>
+    <button class="row divided"><div class="grow"><div class="title">Betaalpas activeren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <div style="height:20px"></div>
+  </div>
+  <nav class="tabbar" data-tabs="overzicht"></nav>
+</section>
+
+<!-- ============== INGEPLANDE OVERBOEKINGEN ============== -->
+<section class="screen" id="screen-ingeplande" data-title="Ingeplande overboekingen">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Ingeplande overboekingen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="section-label">Rekening</div>
+    <button class="row divided"><div class="grow"><div class="title">Marco Meeuwsen PRIVEREKENING</div><div class="sub" style="color:var(--green);font-weight:600">&euro; 31.196,72</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <div class="section-label">Ingeplande overboekingen</div>
+    <div class="empty">
+      <svg width="120" height="90" viewBox="0 0 120 90" aria-hidden="true"><circle cx="30" cy="66" r="8" fill="#f4a63a"/><rect x="66" y="30" width="34" height="52" rx="5" fill="#2f9e6f"/><rect x="72" y="38" width="22" height="30" rx="2" fill="#eafaf3"/><path d="M14 78q18-22 40-8" stroke="#2f9e6f" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="92" cy="22" r="6" fill="#f4a63a"/></svg>
+      <div style="color:var(--grey)">Je hebt geen ingeplande overboekingen.</div>
+    </div>
+  </div>
+  <nav class="tabbar" data-tabs="overzicht"></nav>
+</section>
+
+<!-- ================= INCASSO'S (OVERZICHT) ================= -->
+<section class="screen" id="screen-incassos" data-title="Incasso's beheren">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Overzicht incasso's</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="info-p">Op deze pagina vind je alle ingeplande en uitgevoerde incasso's. Ook kan je je incasso instellingen wijzigen. <a>Lees alles over incasso's op onze informatiepagina.</a></div>
+    <div class="section-label">Selecteer een rekening</div>
+    <button class="row" data-goto="kiesrekening" style="margin:0 20px;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;align-items:center;width:calc(100% - 40px)">
+      <div class="grow"><div style="font-size:17px;color:var(--ink);font-weight:700">Marco Meeuwsen PRIVEREKENING &nbsp;&euro; 31.196,72</div><div style="color:var(--green);font-weight:600;font-size:14px;margin-top:3px">NL48 SNSB 0948 2771 14</div></div>
+      <svg class="chev-svg" width="20" height="20" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#chev"/></svg>
+    </button>
+    <div class="seg" id="inc-seg" style="background:#fff;border-bottom:1px solid var(--line);margin-top:14px">
+      <button data-iseg="ing">Ingepland</button>
+      <button class="active" data-iseg="uit">Uitgevoerd</button>
+      <button data-iseg="ins">Instellingen</button>
+    </div>
+
+    <div class="panel" data-ipanel="uit">
+      <div class="info-p" style="font-size:14px;color:#2a2a2e">Hieronder zie je alle incasso's die zijn uitgevoerd. Ben je het achteraf niet eens met een dergelijk incasso? Dan heb je in de meeste gevallen het recht om het bedrag binnen 56 dagen (acht weken) terug te boeken (storneren). <i>Een eventuele betalingsverplichting naar de incassant vervalt niet, een eventuele machtiging blijft bestaan.</i></div>
+      <div class="day-head"><span>6 september</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">KPN - Mobiel</div><span class="tag">Teruggeboekt</span></div><div class="t-amt">-74,50</div></button>
+      <div class="day-head"><span>2 september</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Amazon Prime Video UK iDeal</div><span class="tag">Teruggeboekt</span></div><div class="t-amt">-5,99</div></button>
+      <div style="height:14px"></div>
+    </div>
+    <div class="panel" data-ipanel="ing" hidden>
+      <div class="info-p" style="font-size:14px;color:#2a2a2e">Hieronder zie je alle incasso's die je op dit moment kan weigeren of blokkeren.</div>
+      <div class="empty"><svg width="110" height="80" viewBox="0 0 120 90"><rect x="66" y="30" width="34" height="52" rx="5" fill="#2f9e6f"/><circle cx="30" cy="64" r="8" fill="#f4a63a"/><path d="M14 78q18-22 40-8" stroke="#2f9e6f" stroke-width="3" fill="none" stroke-linecap="round"/></svg><div style="color:var(--grey)">Er zijn geen ingeplande incasso's</div></div>
+    </div>
+    <div class="panel" data-ipanel="ins" hidden>
+      <button class="row divided"><div class="grow"><div class="title">Incassoblokkade</div><div class="sub">Blokkeer alle incasso's</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+      <button class="row"><div class="grow"><div class="title">Selectieve blokkade</div><div class="sub">Blokkeer specifieke incassanten</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    </div>
+  </div>
+  <nav class="tabbar" data-tabs="overzicht"></nav>
+</section>
+
+<!-- ==================== ZELF REGELEN (tab) ==================== -->
+<section class="screen" id="screen-zelf" data-title="Zelf regelen (tab)">
+  <div class="appbar"><div class="appbar-row"><div class="appbar-title serif">Zelf regelen</div></div></div>
+  <div class="body">
+    <div class="section-label">Je producten</div>
+    <button class="row" data-goto="rekeningen"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="13" height="18" rx="2"/><path d="M8 8h5M8 12h5M8 16h3"/></svg></span><div class="grow"><div class="title">Rekeningen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="betaalpassen"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg></span><div class="grow"><div class="title">Betaalpassen</div><div class="sub">Aanvragen, blokkeren, contactloos</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="applepay"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M18 9a4 4 0 0 1 0 6"/></svg></span><div class="grow"><div class="title">Apple Pay</div><div class="sub">Betalen met je iPhone, iPad of Watch</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="product"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg></span><div class="grow"><div class="title">Product toevoegen</div><div class="sub">Nieuwe rekening of verzekering</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+
+    <div class="section-label">Limieten en toegang</div>
+    <button class="row" data-goto="daglimieten"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 12l4-2M12 8v0"/></svg></span><div class="grow"><div class="title">Daglimieten</div><div class="sub">Hoeveel kun je overboeken en pinnen?</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7-2.6"/></svg></span><div class="grow"><div class="title">Toegang en gegevens delen</div><div class="sub">iDEAL en toegang andere bedrijven</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+
+    <div class="section-label">Je opdrachten</div>
+    <button class="row"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M9 14l2 2 4-5"/></svg></span><div class="grow"><div class="title">Betaalopdrachten</div><div class="sub">Online betaling goedkeuren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></svg></span><div class="grow"><div class="title">Openstaande acties</div><div class="sub">Bekijken en afronden acties</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="12" r="4"/><path d="M4 12h16"/></svg></span><div class="grow"><div class="title">Opnieuw identificeren</div><div class="sub">Identificeer jezelf met de ID-check</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+
+    <div class="section-label">Voorwaarden</div>
+    <button class="row"><div class="grow"><div class="title">Voorwaarden en andere informatie</div></div><svg class="chev-svg" width="20" height="20" viewBox="0 0 24 24" style="color:var(--wine)"><use href="#extlink"/></svg></button>
+    <div style="height:20px"></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ======================= CONTACT (tab) ======================= -->
+<section class="screen" id="screen-contact" data-title="Contact (tab)">
+  <div class="appbar"><div class="appbar-row"><div class="appbar-title serif">Contact</div></div></div>
+  <div class="body">
+    <div class="moved-banner">
+      <svg width="46" height="40" viewBox="0 0 46 40" style="flex:none"><rect x="4" y="8" width="30" height="22" rx="3" fill="#2f9e6f"/><path d="M4 10l15 10 15-10" fill="none" stroke="#fff" stroke-width="2"/><circle cx="37" cy="10" r="7" fill="#f4a63a"/></svg>
+      <div class="grow"><div style="font-weight:700;font-size:14px;color:#3a2a1a">Berichten zijn verplaatst</div><div style="font-size:12.5px;color:#5a4a38;margin-top:3px;line-height:1.35">Berichten van ASN Bank vind je vanaf nu bij je gebruikersprofiel.</div><div style="color:var(--green);font-weight:600;font-size:13px;margin-top:6px">Ontdek meer</div></div>
+      <span class="x">&times;</span>
+    </div>
+
+    <div class="section-label">Snel antwoord op je vraag</div>
+    <button class="row divided"><div class="grow"><div class="title" style="font-weight:600">Waarom krijg ik een nieuwe betaalpas?</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">Waar vind ik mijn jaaroverzicht?</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">E-mail ontvangen over opnieuw identificeren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">Ik heb een vraag over een limiet</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+
+    <div style="padding:18px 20px 4px"><button class="btn btn-primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 20l1.8-5.1A7.5 7.5 0 1 1 20 11.5Z"/></svg>Start chatgesprek</button></div>
+
+    <div class="section-label">Heb je hulp nodig?</div>
+    <button class="row divided"><span class="lead-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 20l1.8-5.1A7.5 7.5 0 1 1 20 11.5Z"/></svg></span><div class="grow"><div class="title" style="font-weight:600">Stel je vraag via de chat</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span><div class="grow"><div class="title" style="font-weight:600">Ontdek de app</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M10 17h4"/></svg></span><div class="grow"><div class="title" style="font-weight:600">Afspraken met een adviseur</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg></span><div class="grow"><div class="title" style="font-weight:600">Bekijk alle telefoonnummers</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+
+    <div class="section-label">Meld fraude</div>
+    <div class="info-p" style="padding-top:0">Ben je opgelicht? Of twijfel je? Bel de klantenservice. Dit kan 24/7.</div>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">Alles over veilig bankieren en fraude</div></div><svg class="chev-svg" width="20" height="20" viewBox="0 0 24 24" style="color:var(--wine)"><use href="#extlink"/></svg></button>
+
+    <div class="section-label">Wat vind je van de app?</div>
+    <div class="smilies">
+      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#c9443a" stroke-width="2"/><circle cx="12" cy="15" r="1.6" fill="#c9443a"/><circle cx="24" cy="15" r="1.6" fill="#c9443a"/><path d="M12 25q6-6 12 0" fill="none" stroke="#c9443a" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#d98a3a" stroke-width="2"/><circle cx="12" cy="15" r="1.6" fill="#d98a3a"/><circle cx="24" cy="15" r="1.6" fill="#d98a3a"/><path d="M12 23q6-3 12 0" fill="none" stroke="#d98a3a" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#c9a23a" stroke-width="2"/><circle cx="12" cy="15" r="1.6" fill="#c9a23a"/><circle cx="24" cy="15" r="1.6" fill="#c9a23a"/><path d="M12 23h12" fill="none" stroke="#c9a23a" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#5aa04a" stroke-width="2"/><circle cx="12" cy="15" r="1.6" fill="#5aa04a"/><circle cx="24" cy="15" r="1.6" fill="#5aa04a"/><path d="M12 22q6 4 12 0" fill="none" stroke="#5aa04a" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#2f9e6f" stroke-width="2"/><circle cx="12" cy="15" r="1.6" fill="#2f9e6f"/><circle cx="24" cy="15" r="1.6" fill="#2f9e6f"/><path d="M11 21q7 7 14 0" fill="none" stroke="#2f9e6f" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+    <div style="padding:14px 20px 22px;color:var(--grey-2);font-size:13px">App versie 1.35.3</div>
+  </div>
+  <nav class="tabbar" data-tabs="contact"></nav>
+</section>
+
+<!-- ==================== REKENINGEN (hub) ==================== -->
+<section class="screen" id="screen-rekeningen" data-title="Rekeningen (hub)">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Rekeningen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <button class="row divided" data-goto="ingeplande"><div class="grow"><div class="title">Ingeplande overboekingen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="incassos"><div class="grow"><div class="title">Incasso's beheren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="contacten"><div class="grow"><div class="title">Contacten</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="rekeningtoegang"><div class="grow"><div class="title">Persoon toevoegen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="rekeningtoegang"><div class="grow"><div class="title">Persoon verwijderen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="weergave"><div class="grow"><div class="title">Weergave rekeningen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="afschrift"><div class="grow"><div class="title">Papieren afschriften aanpassen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ==================== CONTACTEN ==================== -->
+<section class="screen" id="screen-contacten" data-title="Contacten">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Contacten</div>
+    <button class="iconbtn wine" aria-label="Toevoegen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="8" r="4"/><path d="M3 20a7 7 0 0 1 12-4.9M18 14v6M15 17h6"/></svg></button>
+  </div></div>
+  <div class="body">
+    <div class="search-bar"><svg width="18" height="18" viewBox="0 0 24 24" style="color:var(--grey-2)"><use href="#search"/></svg>Naam, alias of rekeningnummer</div>
+    <button class="row divided"><div class="grow"><div class="title" style="font-weight:600">Belastingdienst</div><div class="sub">NL86 INGB 0002 4455 88</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">CZ Groep Zorgverzekeraar</div><div class="sub">NL85 INGB 0668 3390 63</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">DUO Groningen</div><div class="sub">NL45 INGB 0705 0019 03</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">J. de Boer</div><div class="sub">NL22 ABNA 0511 2233 44</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">K. Visser</div><div class="sub">NL18 RABO 0345 6677 88</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">L. Smit</div><div class="sub">NL91 SNSB 0708 1122 33</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">T. Jansen</div><div class="sub">BE68 5390 0754 7034</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">VvE Berkenhof</div><div class="sub">NL77 TRIO 0212 3344 55</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">Wetec Webshop B.V.</div><div class="sub">NL05 INGB 0009 8877 66</div></div></button>
+    <div style="height:20px"></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ============== REKENINGTOEGANG BEHEREN (persoon toevoegen) ============== -->
+<section class="screen" id="screen-rekeningtoegang" data-title="Persoon toevoegen">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Rekeningtoegang beheren</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="stepper"><span class="dot">1</span><span class="bar"></span><span class="dot off">2</span><span class="bar"></span><span class="dot off">3</span></div>
+    <div class="info-p">Iemand toevoegen aan je rekening kun je doen in een paar eenvoudige stappen.</div>
+    <div class="section-label">Kies hoe je iemand wilt toevoegen</div>
+    <button class="row divided"><div class="grow"><div class="title" style="font-weight:600">Iemand machtigen</div><div class="sub" style="white-space:normal">Een ander toegang geven tot jouw rekening om deze te beheren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">Rekeninghouder toevoegen</div><div class="sub" style="white-space:normal">Iemand toevoegen als rekeninghouder waardoor het een gezamenlijke rekening wordt</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <div class="section-label">Iemand toevoegen aan de rekening van je kind</div>
+    <button class="row divided"><div class="grow"><div class="title" style="font-weight:600">Wettelijk vertegenwoordiger toevoegen</div><div class="sub" style="white-space:normal">Een andere ouder of voogd toevoegen aan de rekening van je minderjarige kind</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <div style="height:20px"></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ============== AFSCHRIFTFREQUENTIE WIJZIGEN ============== -->
+<section class="screen" id="screen-afschrift" data-title="Papieren afschriften">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Afschriftfrequentie wijzigen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="stepper"><span class="dot">1</span><span class="bar"></span><span class="dot off">2</span><span class="bar"></span><span class="dot off">3</span></div>
+    <div class="section-label">Persoonsgegevens</div>
+    <div class="peach-card">
+      <div style="font-weight:700;margin-bottom:2px">Postadres</div>
+      <div>Nederland</div>
+      <div style="font-weight:700;margin:10px 0 2px">E-mailadres (voorkeur)</div>
+      <div>m.meeuwsen@voorbeeld.nl</div>
+      <div style="margin-top:10px">Klopt dit niet? <a>Wijzig dan je adres</a></div>
+    </div>
+    <div style="padding:18px 20px"><button class="btn btn-primary" style="width:100%">Volgende</button></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ============== WEERGAVE REKENINGEN ============== -->
+<section class="screen" id="screen-weergave" data-title="Weergave rekeningen">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Weergave rekeningen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div style="height:8px"></div>
+    <button class="row divided" data-goto="weergave-betalen" style="border-radius:12px;border:1px solid var(--line);margin:8px 20px"><div class="grow"><div class="title">Betalen</div><div class="sub">2 rekeningen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row" data-goto="weergave-sparen" style="border-radius:12px;border:1px solid var(--line);margin:8px 20px"><div class="grow"><div class="title">Sparen</div><div class="sub">1 rekening</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<section class="screen" id="screen-weergave-betalen" data-title="Weergave &middot; Betalen">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Betalen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="toggle-row"><div class="grow"><div class="tt">Totaalsaldo betalen tonen</div><div class="ts">Op je overzicht</div></div><span class="switch" data-switch></span></div>
+    <div class="section-label">Je rekeningen</div>
+    <div class="link-green">Volgorde aanpassen</div>
+    <div class="acctline"><div class="grow"><div class="nm">Marco Meeuwsen PRIVEREKENING</div><div class="ib">NL48 SNSB 0948 2771 14</div></div><span class="ed" data-goto="rekening-aanpassen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+    <div class="acctline"><div class="grow"><div class="nm">SNS Basis</div><div class="ib">NL39 SNSB 8847 6357 21</div></div><span class="ed" data-goto="rekening-aanpassen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<section class="screen" id="screen-weergave-sparen" data-title="Weergave &middot; Sparen">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Sparen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="toggle-row"><div class="grow"><div class="tt">Totaalsaldo sparen tonen</div><div class="ts">Op je overzicht</div></div><span class="switch" data-switch></span></div>
+    <div class="section-label">Je rekeningen</div>
+    <div class="acctline"><div class="grow"><div class="nm">Marco Meeuwsen SPAARREKENING</div><div class="ib">NL66 SNSB 8814 8162 55</div></div><span class="ed" data-goto="rekening-aanpassen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ============== REKENING AANPASSEN (modal) ============== -->
+<section class="screen" id="screen-rekening-aanpassen" data-title="Rekening aanpassen (sheet)" data-modal="1">
+  <div class="sheet" style="height:auto;max-height:70%">
+    <div class="sheet-bar"><div class="row1"><button class="iconbtn" data-back aria-label="Sluiten"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="t">Rekening aanpassen</div></div></div>
+    <div class="body">
+      <div style="padding:18px 20px 4px">
+        <div style="font-size:13px;color:var(--grey)">Rekeningnaam</div>
+        <div style="display:flex;align-items:center;border-bottom:1px solid var(--line);padding:8px 0"><div class="grow" style="font-size:16px;color:var(--ink)">Marco Meeuwsen PRIVEREKENING</div><span style="color:var(--grey-2)">&times;</span></div>
+        <div style="font-size:12px;color:var(--grey);margin-top:4px">NL48 SNSB 0948 2771 14 &nbsp;&euro; 31.196,72</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:18px 20px"><span class="chkbox" data-check style="width:22px;height:22px;border-radius:5px;background:var(--wine);display:grid;place-items:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M5 12l5 5 9-11"/></svg></span><div><div style="font-size:15px;color:var(--ink)">Rekening tonen</div><div style="font-size:12px;color:var(--grey)">Op je overzicht</div></div></div>
+      <div style="padding:8px 16px calc(14px + var(--safe-bottom))"><button class="btn btn-primary" data-back style="width:100%">Bevestigen</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== APPLE PAY ============== -->
+<section class="screen" id="screen-applepay" data-title="Apple Pay">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Apple Pay</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="section-label" style="padding-bottom:2px">Apple Pay activeren</div>
+    <div class="info-p" style="padding-top:0">Kies met welke rekening(en) je Apple Pay wilt gebruiken.</div>
+    <div class="link-green">Hoe werkt Apple Pay?</div>
+    <div class="acctline"><div class="grow"><div class="nm">SNS Studentenrek.</div><div class="ib">NL48 SNSB 0948 2771 14</div><div style="display:flex;align-items:center;gap:5px;margin-top:5px;color:var(--green);font-size:13px;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5 9-11"/></svg>Actief</div></div></div>
+    <div class="acctline"><div class="grow"><div class="nm">SNS Basis</div><div class="ib">NL39 SNSB 8847 6357 21</div><div style="margin-top:5px;color:var(--grey);font-size:13px">Niet actief</div></div>
+      <span style="background:#000;color:#fff;border-radius:6px;padding:6px 10px;font-size:11px;display:flex;align-items:center;gap:5px;flex:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M16 3c0 2-1.6 3.7-3.5 3.6C12.3 4.8 14 3 16 3Zm3 14c-.6 1.4-1 2-1.8 3.2-1.1 1.7-2.6 3.8-4.5 3.8-1.7 0-2.1-1.1-4.4-1.1S6 24 4.4 24c-1.9 0-3.3-1.9-4.4-3.6C-2 16.8-1 11 2.6 9c1.3-.7 2.5-.5 3.6-.5 1.3 0 2 .6 3.4.6 1.3 0 2.1-.6 3.6-.6 1 0 2.6.1 3.9 1.5-3.4 2-2.8 6.6.9 7.5Z"/></svg>Wallet</span>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ============== PRODUCT TOEVOEGEN ============== -->
+<section class="screen" id="screen-product" data-title="Product toevoegen">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Product toevoegen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="section-label">Producten</div>
+    <button class="row prod-row divided" data-goto="voorwie"><span class="lead-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="#2f9e6f"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8" stroke="#fff" stroke-width="2"/></svg></span><div class="grow"><div class="title">Betalen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row prod-row" data-goto="voorwie"><span class="lead-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="#e88a3a"><path d="M4 11a7 5 0 0 1 14 0v4a7 5 0 0 1-14 0z"/><circle cx="15" cy="10" r="1.4" fill="#fff"/></svg></span><div class="grow"><div class="title">Sparen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row prod-row" data-goto="voorwie"><span class="lead-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="#c94b6a"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span><div class="grow"><div class="title">Verzekeren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row prod-row" data-goto="voorwie"><span class="lead-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="#3a8fd0"><rect x="4" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="16" y="4" width="4" height="16"/></svg></span><div class="grow"><div class="title">Beleggen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row prod-row" data-goto="voorwie"><span class="lead-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="#d0743a"><path d="M4 20c0-5 4-9 8-9s8 4 8 9z"/><circle cx="12" cy="7" r="3"/></svg></span><div class="grow"><div class="title">Pensioen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <div style="height:20px"></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<section class="screen" id="screen-voorwie" data-title="Product &middot; Voor wie?">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Product toevoegen</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="section-label">Voor wie?</div>
+    <button class="row divided"><span class="lead-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="#2f9e6f"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg></span><div class="grow"><div class="title">Voor jezelf</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="#e88a3a"><circle cx="12" cy="9" r="3"/><path d="M6 21a6 6 0 0 1 12 0z"/></svg></span><div class="grow"><div class="title">Voor je kind</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="#c94b6a"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2 21a6 6 0 0 1 12 0zM10 21a6 6 0 0 1 12 0z"/></svg></span><div class="grow"><div class="title">Samen</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row"><span class="lead-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="#3a8fd0"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg></span><div class="grow"><div class="title">Voor jezelf en gevolmachtigde</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <div style="padding:20px"><button class="btn" data-back style="width:100%;background:#fff;border:1.5px solid var(--green);color:var(--green)">Vorige</button></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ============== DAGLIMIETEN ============== -->
+<section class="screen" id="screen-daglimieten" data-title="Daglimieten">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Daglimieten</div><div style="width:30px"></div>
+  </div></div>
+  <div class="body">
+    <div class="section-label" style="padding-bottom:2px">Welke limiet wil je bekijken of aanpassen?</div>
+    <div class="lim-cards">
+      <div class="lim-card on"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6"><path d="M4 9h16M8 5l-4 4 4 4M16 15l4 4-4 4" transform="translate(0 -3)"/></svg><div class="lc-t">Overboeken en geld opnemen</div></div>
+      <div class="lim-card"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--grey)" stroke-width="1.6"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg><div class="lc-t">Met betaalpas betalen</div></div>
+    </div>
+    <div class="section-label" style="padding-bottom:4px">Maak je keuze</div>
+    <div class="pillseg" id="dag-seg"><button class="on" data-dseg>Overboeken</button><button data-dseg>Geld opnemen</button></div>
+    <div class="bullets">
+      <div class="q">Hoeveel kun je vandaag nog overboeken naar een ander?</div>
+      <ul>
+        <li>Dit verschilt per inlogmiddel. In totaal kun je maximaal &euro; 5.000,00 overboeken per dag.</li>
+        <li>Je hebt vandaag al &euro; 0,00 overgeboekt.</li>
+        <li>Hierdoor kun je vandaag nog &euro; 5.000,00 overboeken.</li>
+        <li>Naar je eigen rekeningen kun je standaard meer overboeken.</li>
+      </ul>
+    </div>
+    <div class="lim-block">
+      <div class="h">Naar rekening van een ander</div>
+      <div style="font-size:14px;color:#2a2a2e;line-height:1.5">Je daglimiet verhogen? Voor de veiligheid duurt het 4 uur voordat je een verhoging boven &euro; 1.000 kunt gebruiken. Dit helpt fraude te voorkomen.</div>
+      <div class="kk">Overboeken met Digipas</div><div class="vv">&euro; 5.000</div><span class="wz">Daglimiet wijzigen</span>
+      <div class="kk">Overboeken met App</div><div class="vv">&euro; 1.000</div><span class="wz">Daglimiet wijzigen</span>
+    </div>
+    <div class="lim-block">
+      <div class="h">Naar eigen rekeningen</div>
+      <div class="kk">Overboeken met Digipas</div>
+      <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar tegenrekening andere bank</div><div class="vv">&euro; 250.000</div>
+      <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar eigen rekening bij SNS</div><div class="vv">&euro; 50.000.000</div>
+      <div class="kk">Overboeken met App</div>
+      <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar tegenrekening andere bank</div><div class="vv">&euro; 250.000</div>
+      <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar eigen rekening bij SNS</div><div class="vv">&euro; 1.250.000</div>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ============== KIES EEN REKENING (picker) ============== -->
+<section class="screen" id="screen-kiesrekening" data-title="Kies een rekening">
+  <div class="appbar"><div class="appbar-row">
+    <button class="iconbtn" data-back aria-label="Terug"><svg width="24" height="24" viewBox="0 0 24 24"><use href="#back"/></svg></button>
+    <div class="appbar-title center">Kies een rekening</div>
+    <button class="iconbtn" aria-label="Zoeken"><svg width="22" height="22" viewBox="0 0 24 24"><use href="#search"/></svg></button>
+  </div></div>
+  <div class="body">
+    <div class="search-bar"><svg width="18" height="18" viewBox="0 0 24 24" style="color:var(--grey-2)"><use href="#search"/></svg>Zoeken</div>
+    <button class="row divided" data-back><div class="grow"><div class="title">SNS Basis</div><div class="sub" style="color:var(--green);font-weight:600">NL39 SNSB 8847 6357 21</div></div></button>
+    <button class="row" data-back><div class="grow"><div class="title">Marco Meeuwsen PRIVEREKENING</div><div class="sub" style="color:var(--green);font-weight:600">NL48 SNSB 0948 2771 14</div></div></button>
+  </div>
+  <nav class="tabbar" data-tabs="zelf"></nav>
+</section>
+
+<!-- ==================== OVERBOEKEN (sheet) ==================== -->
+<section class="screen" id="screen-overboeken" data-title="Overboeken (sheet)" data-modal="1">
+  <div class="sheet">
+    <div class="sheet-bar">
+      <div class="row1"><button class="iconbtn" data-back aria-label="Sluiten"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="t">Overboeken</div></div>
+    </div>
+    <div class="body">
+      <div class="ovb-amt">&euro; 0,00</div>
+      <div class="ovb-vnlabels"><span>Van</span><span style="flex:0 0 34px"></span><span>Naar</span></div>
+      <div class="ovb-vn">
+        <div class="ovb-card"><div class="nm">Marco Meeuwsen PRIVEREKENING</div><div class="bl">&euro; 31.196,72</div></div>
+        <div class="ovb-arrow">&rarr;</div>
+        <div class="ovb-plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+      </div>
+      <div class="ovb-field"><div class="k">Omschrijving of betalingskenmerk</div><div class="v" style="color:var(--grey-2)">&nbsp;</div></div>
+      <div class="ovb-field"><div class="k">Inplannen voor</div><div class="v">Vandaag, eenmalig</div></div>
+      <div class="ovb-cta"><button class="btn btn-primary" style="width:100%">Overboeken</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== device chrome ===================== -->
+<div class="chrome">
+  <div class="status-bar"><span class="time">9:41</span><span class="right">
+    <svg width="19" height="12" viewBox="0 0 19 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 11.2 6.1 8.7a3.4 3.4 0 0 1 4.8 0zM3.7 6.3a7.3 7.3 0 0 1 9.6 0l1.4-1.5a9.4 9.4 0 0 0-12.4 0zM.6 3.1a11.8 11.8 0 0 1 15.8 0L17.8 1.6a13.9 13.9 0 0 0-18.6 0z"/></svg>
+    <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="22" height="12" rx="3.8" fill="none" stroke="currentColor" stroke-opacity=".35"/><rect x="2" y="2" width="19" height="9" rx="2.5" fill="currentColor"/><path d="M24.5 4.2v4.6a2.4 2.4 0 0 0 0-4.6z" fill="currentColor" fill-opacity=".4"/></svg>
+  </span></div>
+  <div class="dynamic-island"></div>
+  <div class="home-indicator"></div>
+</div>
+
+</div></div></div></div>
+
+<div class="hint">press <b>I</b> for screen index &middot; <b>Esc</b>/<b>Backspace</b> to go back</div>
+<div class="index-overlay" id="index-overlay"><ol id="index-list"></ol></div>
+
+<template id="tabbar-tpl">
+  <button class="tab" data-t="overzicht" data-goto="overzicht"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Overzicht</button>
+  <button class="tab" data-t="zelf" data-goto="zelf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>Zelf regelen</button>
+  <button class="tab" data-t="contact" data-goto="contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 20l1.8-5.1A7.5 7.5 0 1 1 20 11.5Z"/></svg>Contact</button>
+</template>
+
+<script>
+(function () {
+  'use strict';
+  var viewport = document.getElementById('viewport');
+  var stack = [], animating = false;
+
+  // build tab bars from template
+  var tpl = document.getElementById('tabbar-tpl');
+  [].forEach.call(viewport.querySelectorAll('.tabbar[data-tabs]'), function(nav){
+    nav.appendChild(tpl.content.cloneNode(true));
+    var act = nav.getAttribute('data-tabs');
+    [].forEach.call(nav.querySelectorAll('.tab'), function(t){
+      if(t.getAttribute('data-t') === act){ t.classList.add('active'); t.removeAttribute('data-goto'); }
+    });
+  });
+
+  function screens(){ return [].slice.call(viewport.querySelectorAll('.screen')); }
+  function byName(n){ return document.getElementById('screen-' + n); }
+  function nameOf(el){ return el.id.replace(/^screen-/, ''); }
+  var TABS = { overzicht:1, zelf:1, contact:1 };
+
+  function fit(){
+    var scaler = document.querySelector('.device-scaler'), device = document.querySelector('.device');
+    var pad = 40;
+    scaler.style.setProperty('--fit', Math.min((innerHeight-pad)/device.offsetHeight,(innerWidth-pad)/device.offsetWidth,1));
+  }
+  function clearAnim(el){ el.className = el.className.replace(/\s*is-(entering|leaving)-[a-z-]+/g,''); }
+
+  function show(name, dir){
+    var next = byName(name); if(!next || animating) return;
+    var cur = screens().filter(function(s){return !s.hidden;})[0];
+    if(cur === next) return;
+    next.hidden = false;
+    var b = next.querySelector('.body'); if(b) b.scrollTop = 0;
+    if(!cur || !dir){ screens().forEach(function(s){ if(s!==next) s.hidden=true; }); location.hash=name; return; }
+    animating = true;
+    var leave = dir==='up' ? 'up-out' : dir;
+    next.classList.add('is-entering-'+dir);
+    if(dir==='up'){ /* modal: keep cur underneath, no leave anim */ cur=null; }
+    else cur.classList.add('is-leaving-'+leave);
+    var need = cur ? 2 : 1, done = 0;
+    function fin(){ if(++done<need) return; clearAnim(next); if(cur){ clearAnim(cur); cur.hidden=true; } animating=false; }
+    next.addEventListener('animationend', fin, {once:true});
+    if(cur) cur.addEventListener('animationend', fin, {once:true});
+    location.hash = name;
+  }
+  function closeModal(modal){
+    animating = true;
+    modal.classList.add('is-leaving-up-out');
+    modal.addEventListener('animationend', function(){ clearAnim(modal); modal.hidden=true; animating=false; }, {once:true});
+  }
+  function go(name){
+    var next = byName(name); if(!next) return;
+    var cur = screens().filter(function(s){return !s.hidden;})[0];
+    if(next.getAttribute('data-modal')){ show(name,'up'); return; }
+    // tab switch: reset stack, no push animation history
+    if(TABS[name]){ stack=[]; show(name,'push'); return; }
+    if(cur) stack.push(nameOf(cur));
+    show(name,'push');
+  }
+  function back(){
+    var vis = screens().filter(function(s){return !s.hidden;});
+    var modal = vis.filter(function(s){return s.getAttribute('data-modal');})[0];
+    if(modal){ closeModal(modal); location.hash = nameOf(vis[0]); return; }
+    if(!stack.length) return; show(stack.pop(),'pop');
+  }
+
+  // login keypad
+  var entered = 0;
+  function renderPins(){ [].forEach.call(document.querySelectorAll('#pins .pin'), function(p,i){ p.classList.toggle('filled', i<entered); }); }
+  function login(){ entered=0; renderPins(); stack=[]; show('overzicht', null); }
+  document.getElementById('keypad').addEventListener('click', function(e){
+    var k = e.target.closest('.key'); if(!k) return;
+    if(k.hasAttribute('data-del')){ if(entered>0) entered--; renderPins(); return; }
+    if(k.hasAttribute('data-face')){ login(); return; }
+    if(k.hasAttribute('data-d')){ if(entered<5) entered++; renderPins(); if(entered===5) setTimeout(login,180); }
+  });
+
+  // account segmented control
+  document.getElementById('acct-seg').addEventListener('click', function(e){
+    var b = e.target.closest('[data-seg]'); if(!b) return;
+    [].forEach.call(this.children, function(x){ x.classList.remove('active'); });
+    b.classList.add('active');
+    var acc = byName('account');
+    [].forEach.call(acc.querySelectorAll('[data-panel]'), function(p){ p.hidden = p.getAttribute('data-panel') !== b.getAttribute('data-seg'); });
+  });
+  // incasso segmented control
+  document.getElementById('inc-seg').addEventListener('click', function(e){
+    var b = e.target.closest('[data-iseg]'); if(!b) return;
+    [].forEach.call(this.children, function(x){ x.classList.remove('active'); });
+    b.classList.add('active');
+    var inc = byName('incassos');
+    [].forEach.call(inc.querySelectorAll('[data-ipanel]'), function(p){ p.hidden = p.getAttribute('data-ipanel') !== b.getAttribute('data-iseg'); });
+  });
+
+  // ---- dynamic transaction detail --------------------------------
+  function parseAmt(txt){
+    var neg = txt.indexOf('-') >= 0;
+    var n = parseFloat(txt.replace(/[^\d,]/g,'').replace(/\./g,'').replace(',','.')) || 0;
+    return neg ? -n : n;
+  }
+  function fmtEUR(n){
+    var neg = n < 0; n = Math.abs(n);
+    var s = n.toFixed(2).replace('.', ',');
+    s = s.replace(/\B(?=(\d{3})+(?!\d)(?=,))/g, '.'); // thousands before decimals
+    // simpler robust thousands:
+    var parts = n.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return '€ ' + (neg?'-':'') + parts[0] + ',' + parts[1];
+  }
+  function categorize(desc){
+    var d = desc.toLowerCase();
+    var map = [
+      ['Boodschappen', ['albert heijn','jumbo','aldi','lidl','plus ','spar']],
+      ['Internet, TV & bellen', ['kpn','vodafone','ziggo','t-mobile','odido']],
+      ['Vervoer', ['shell','ns groep','ns reizigers','q-park','uber','bolt','tango','bp ','esso','ov-chip']],
+      ['Abonnementen', ['netflix','spotify','disney','prime video','apple.com','itunes','pathe','basic-fit']],
+      ['Wonen', ['huur','greenchoice','eneco','vattenfall','vitens','woning']],
+      ['Zorg', ['mutualiteit','cz groep','zorgverzek','cak','apotheek']],
+      ['Eten & drinken', ['thuisbezorgd','domino','mcdonald','bistro','restaurant','gall']],
+      ['Shoppen', ['bol.com','coolblue','zalando','ikea','action','hema','kruidvat','etos','rituals','postnl']],
+      ['Inkomen', ['salaris']],
+      ['Onderwijs', ['duo ']]
+    ];
+    for(var i=0;i<map.length;i++){ for(var j=0;j<map[i][1].length;j++){ if(d.indexOf(map[i][1][j])>=0) return map[i][0]; } }
+    return 'Overig';
+  }
+  var CUR_BAL = 31196.72;
+  function initTxnSaldo(){
+    var panel = document.querySelector('#screen-account [data-panel="txns"]');
+    if(!panel) return;
+    var rows = [].slice.call(panel.querySelectorAll('.txn'));
+    var acc = CUR_BAL;
+    rows.forEach(function(t){
+      t.__saldo = acc;
+      var amtEl = t.querySelector('.t-amt, .pill');
+      acc = acc - parseAmt(amtEl ? amtEl.textContent : '0');
+    });
+  }
+  function decodeEntities(s){ var d=document.createElement('textarea'); d.innerHTML=s; return d.value; }
+  function openTxn(row){
+    var amtEl = row.querySelector('.t-amt, .pill');
+    var amtTxt = amtEl ? amtEl.textContent.trim() : '';
+    var pos = !!row.querySelector('.pill') || amtTxt.charAt(0) === '+';
+    var mainHtml = row.querySelector('.t-main').innerHTML;
+    var fullHtml = row.getAttribute('data-desc') || mainHtml.replace(/&hellip;|…/g,'');
+    var name = decodeEntities(mainHtml).replace(/…$/,'').split(' ')[0].split('  ')[0].trim();
+    var day = '';
+    var prev = row.previousElementSibling;
+    while(prev){ if(prev.classList && prev.classList.contains('day-head')){ day = prev.querySelector('span').textContent.trim(); break; } prev = prev.previousElementSibling; }
+
+    document.getElementById('txd-amt').innerHTML = '€ ' + (pos?'+':'') + amtTxt.replace(/^[+-]/,'');
+    var saldoEl = document.getElementById('txd-saldo');
+    if(typeof row.__saldo === 'number'){ saldoEl.hidden=false; saldoEl.innerHTML = 'Saldo na boeking ' + fmtEUR(row.__saldo); }
+    else saldoEl.hidden = true;
+    document.getElementById('txd-date').textContent = day + ' 12:' + ('0'+(name.length%59)).slice(-2);
+    document.getElementById('txd-cat').textContent = categorize(decodeEntities(mainHtml));
+    document.getElementById('txd-desc').innerHTML = fullHtml;
+    var isTerug = !!row.querySelector('.tag');
+    document.getElementById('txd-type').textContent = pos ? (isTerug ? 'Storno (terugboeking)' : 'Overboeking') : (isTerug ? 'Storno (terugboeking)' : 'Incasso / betaling');
+    var party = document.getElementById('txd-party');
+    if(pos){
+      party.hidden = false;
+      document.getElementById('txd-party-k').textContent = 'Van';
+      document.getElementById('txd-party-name').textContent = name;
+      document.getElementById('txd-party-iban').textContent = 'NL•• •••• •••• ••';
+    } else { party.hidden = true; }
+
+    var cur = screens().filter(function(s){return !s.hidden;})[0];
+    if(cur) stack.push(nameOf(cur));
+    show('txn','push');
+  }
+
+  // daglimieten pill segment
+  var dagSeg = document.getElementById('dag-seg');
+  if(dagSeg) dagSeg.addEventListener('click', function(e){
+    var b = e.target.closest('[data-dseg]'); if(!b) return;
+    [].forEach.call(this.children, function(x){ x.classList.remove('on'); }); b.classList.add('on');
+  });
+  // daglimieten limit-type cards
+  document.addEventListener('click', function(e){
+    var lc = e.target.closest('.lim-card'); if(!lc || !lc.parentNode.classList.contains('lim-cards')) return;
+    [].forEach.call(lc.parentNode.children, function(x){ x.classList.remove('on'); }); lc.classList.add('on');
+  });
+
+  document.addEventListener('click', function(e){
+    if(e.target.closest('[data-lock]')){ stack=[]; entered=0; renderPins(); show('login', null); return; }
+    if(e.target.closest('.moved-banner .x')){ var bn=e.target.closest('.moved-banner'); bn.style.display='none'; return; }
+    var sw = e.target.closest('[data-switch]'); if(sw){ sw.classList.toggle('on'); return; }
+    var ck = e.target.closest('[data-check]'); if(ck){ ck.classList.toggle('off'); return; }
+    var t = e.target.closest('.txn'); if(t){ e.preventDefault(); openTxn(t); return; }
+    var g = e.target.closest('[data-goto]'); if(g){ e.preventDefault(); go(g.dataset.goto); return; }
+    if(e.target.closest('[data-back]')){ e.preventDefault(); back(); }
+  });
+
+  // screen index
+  var overlay = document.getElementById('index-overlay'), list = document.getElementById('index-list');
+  function buildIndex(){
+    list.innerHTML='';
+    screens().forEach(function(s){
+      var li=document.createElement('li'), b=document.createElement('button');
+      b.textContent = s.dataset.title || nameOf(s);
+      b.onclick=function(){ overlay.removeAttribute('open'); stack=[]; screens().forEach(function(x){x.hidden=true;}); show(nameOf(s), null); };
+      li.appendChild(b); list.appendChild(li);
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.target.matches('input,textarea')) return;
+    var k=e.key.toLowerCase();
+    if(k==='i'){ buildIndex(); overlay.toggleAttribute('open'); }
+    else if(e.key==='Escape'){ if(overlay.hasAttribute('open')) overlay.removeAttribute('open'); else back(); }
+    else if(e.key==='Backspace'){ e.preventDefault(); back(); }
+  });
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.removeAttribute('open'); });
+
+  // full-screen mode: on real phones, when installed to home screen, or via ?full
+  function updateFs(){
+    var standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    var phone = matchMedia('(max-width: 500px)').matches;
+    var forced = /[?&]full/.test(location.search);
+    document.body.classList.toggle('fs', standalone || phone || forced);
+  }
+  updateFs();
+  addEventListener('resize', updateFs);
+  addEventListener('resize', fit); fit();
+  initTxnSaldo();
+  screens().forEach(function(s,i){ s.hidden = i!==0; });
+  var init = location.hash.slice(1);
+  if(init && byName(init)){ screens().forEach(function(x){x.hidden=true;}); show(init, null); }
+})();
+</script>
+</body>
+</html>

@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="ASN">
+<meta name="apple-mobile-web-app-title" content="Lindebank">
 <meta name="theme-color" content="#e4f3f0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;500;600;700;800&display=swap">
-<title>ASN-style Prototype</title>
+<title>Lindebank Prototype</title>
 <style>
   /* ===============================================================
      Device shell — logical resolution 440 x 956 (iPhone 17 Pro Max
@@ -22,7 +22,7 @@
        --red   #b93427  negative amounts
        --wine  #6a112c  active tab icon + chevrons
        --drop  #ee4734  logo mark
-     Account identity is the fictional persona from DECISIONS.md (Marco Meeuwsen);
+     Account identity is the fictional persona (Marco Meeuwsen, Lindebank);
      balance set to ~29k per request. Third-party payee names anonymised.
      =============================================================== */
   :root {
@@ -153,6 +153,8 @@
   .txn .grow { flex:1; min-width:0; }
   .txn .t-main { font-size:15px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .txn .t-amt { font-size:15px; font-weight:600; white-space:nowrap; color:var(--ink); }
+  .txn .t-amt .t-val { display:block; text-align:right; }
+  .txn .t-amt .t-conv { display:block; text-align:right; font-size:12px; font-weight:400; color:var(--grey); margin-top:2px; }
   .pill { display:inline-block; font-size:14px; font-weight:600; padding:3px 9px; border-radius:6px; white-space:nowrap; color:#1a8124; border:1px solid #7fc98a; background:#eef8f0; }
   .tag { display:inline-block; font-size:12px; color:#7a5a00; background:#f8ecc6; border:1px solid #e6cf8a; padding:2px 8px; border-radius:4px; margin-top:5px; }
 
@@ -287,15 +289,15 @@
       <button class="iconbtn" aria-label="Profiel"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
     </div>
     <div class="login-logo">
-      <span class="word">asn</span>
+      <span class="word">linde</span>
       <svg width="42" height="40" viewBox="0 0 42 40" aria-hidden="true">
-        <path d="M21 3c6 5 10 9 10 16 0 7-5 12-11 12-2 0-4-1-4-3 0-3 4-3 4-7 0-3-3-4-3-8 0-4 2-7 4-10Z" fill="#ee4734"/>
-        <path d="M15 15c-3 2-5 5-5 9 0 6 5 10 11 10-5-1-8-4-8-9 0-4 1-7 2-10Z" fill="#c62f22"/>
+        <path d="M21 4C12 8 8 15 9 23c1 6 6 10 12 10 6 0 11-4 12-10 1-8-3-15-12-19Z" fill="#ee4734"/>
+        <path d="M21 10v29" stroke="#c62f22" stroke-width="2.2" stroke-linecap="round" fill="none"/>
       </svg>
       <span class="word">bank</span>
     </div>
-    <div class="login-sub">voorheen <b>SNS</b></div>
-    <div class="greet">Goedemorgen Alex</div>
+    <div class="login-sub">voorheen <b>Veldbank</b></div>
+    <div class="greet">Goedemorgen Sanne</div>
     <div class="login-hint">Log in met je mobiele pincode</div>
     <div class="pins" id="pins"><div class="pin"></div><div class="pin"></div><div class="pin"></div><div class="pin"></div><div class="pin"></div></div>
     <div class="keypad" id="keypad">
@@ -335,10 +337,10 @@
     <div class="section-label" style="color:var(--ink)">Betalen</div>
     <button class="row" data-goto="account">
       <div class="grow"><div class="title">Marco Meeuwsen PRIVEREKENING</div><div class="sub">NL48 SNSB 0948 2771 14</div></div>
-      <div class="amt">&euro; 32.694,53</div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
+      <div class="amt">&euro; 33.689,58</div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
     </button>
     <button class="row">
-      <div class="grow"><div class="title">SNS Basis</div><div class="sub">NL71 SNSB 0559 3020 88</div></div>
+      <div class="grow"><div class="title">SNS Basis</div><div class="sub">NL39 SNSB 8847 6357 21</div></div>
       <div class="amt neg">&euro; -12,15</div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
     </button>
     <button class="row">
@@ -348,7 +350,7 @@
 
     <div class="section-label" style="color:var(--ink)">Sparen</div>
     <button class="row">
-      <div class="grow"><div class="title">Marco Meeuwsen SPAARREKENING</div><div class="sub">NL05 SNSB 0810 4477 63</div></div>
+      <div class="grow"><div class="title">Marco Meeuwsen SPAARREKENING</div><div class="sub">NL37 LNDB 0246 8135 79</div></div>
       <div class="amt">&euro; 0,55</div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg>
     </button>
     <div style="display:flex;gap:22px;padding:8px 20px 2px">
@@ -387,7 +389,7 @@
     </div>
     <div class="acct-head">
       <div class="acct-name">Marco Meeuwsen PRIVEREKENING</div>
-      <div class="acct-meta"><span class="acct-iban">NL48 SNSB 0948 2771 14</span><span class="acct-bal">&euro; 32.694,53</span></div>
+      <div class="acct-meta"><span class="acct-iban">NL48 SNSB 0948 2771 14</span><span class="acct-bal">&euro; 33.689,58</span></div>
       <div class="acct-actions"><button class="btn btn-primary" data-goto="overboeken">Overboeken</button><button class="btn btn-primary">Betaalverzoek</button></div>
     </div>
     <div class="seg" id="acct-seg">
@@ -400,7 +402,45 @@
     <!-- panel: transactions -->
     <div class="panel" data-panel="txns">
       <div class="look-ahead"><span>Kijk vooruit</span><svg class="chev chev-svg" width="22" height="22" viewBox="0 0 24 24"><use href="#chev"/></svg></div>
-      <div class="day-head"><span>Vandaag - 7 oktober</span><span>&euro;</span></div>
+      <div class="day-head"><span>Vandaag - 27 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Meeuwsen van Aarle</div></div><div class="t-amt">-400,00</div></button>
+      <div class="day-head"><span>23 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE</div></div><div class="t-amt">-0,95</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">UKVI ETAMOB00001732001&gt;LONDON</div></div><div class="t-amt">-24,69</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">bol.com</div></div><div class="t-amt">-431,90</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">LINFOSYS B V</div></div><span class="pill">+2.143,94</span></button>
+      <div class="day-head"><span>22 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin</div></div><div class="t-amt">-12,08</div></button>
+      <div class="day-head"><span>19 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin</div></div><div class="t-amt">-18,06</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>18 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">VALVE CORPORATION via Nuvei</div></div><div class="t-amt">-9,22</div></button>
+      <div class="day-head"><span>16 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>15 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Ad Delhaize Ravels&nbsp;&nbsp;&gt;Ravels</div></div><div class="t-amt">-24,69</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Tilburg 4208-23101&nbsp;&nbsp;&gt;Tilburg</div></div><div class="t-amt">-1,10</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">NLOVLD5DNABAQED5Z7&nbsp;&nbsp;&gt;www.ovpay.nl</div></div><div class="t-amt">-1,52</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">CAK</div></div><div class="t-amt">-100,00</div></button>
+      <div class="day-head"><span>14 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin</div></div><div class="t-amt">-11,99</div></button>
+      <div class="day-head"><span>13 oktober</span><span>&euro;</span></div>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE</div></div><div class="t-amt">-0,95</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin</div></div><div class="t-amt">-23,56</div></button>
+      <div class="day-head"><span>12 oktober</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">CZ Groep Zorgverzekeraar</div></div><div class="t-amt">-148,95</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 12.10.2026 8U45 K&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>11 oktober</span><span></span></div>
+      <button class="txn" data-desc="Revolut**6007*&nbsp;&nbsp;&gt;Dublin 11.10.2026 16U18 EUR 25,00 Apple Pay betaling"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin 11.10.2026 16U18&hellip;</div></div><div class="t-amt">-25,00</div></button>
+      <div class="day-head"><span>10 oktober</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">APPLE.COM/BILL&nbsp;&nbsp;&gt;ITUNES.CO 10.10.2026 7U31&hellip;</div></div><div class="t-amt">-1,99</div></button>
+      <div class="day-head"><span>9 oktober</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 09.10.2026 8U52 K&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>8 oktober</span><span></span></div>
+      <button class="txn"><div class="grow"><div class="t-main">Xsolla (USA) Inc</div></div><div class="t-amt">-7,49</div></button>
+      <button class="txn"><div class="grow"><div class="t-main">BCK*Linfosys B.V.&nbsp;&nbsp;&gt;GOIRLE 08.10.2026 8U37 K&hellip;</div></div><div class="t-amt">-0,95</div></button>
+      <div class="day-head"><span>7 oktober</span><span></span></div>
       <button class="txn" data-desc="Revolut**6007*&nbsp;&nbsp;&gt;Dublin GBP 25,00 KV001 Koers: 0,8532423&nbsp;&nbsp;IERLAND 565338 20261026 12:34:56"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin GBP 25,00 KV0&hellip;</div></div><div class="t-amt">-29,71</div></button>
       <button class="txn"><div class="grow"><div class="t-main">Revolut**6007*&nbsp;&nbsp;&gt;Dublin GBP 75,00 KV0&hellip;</div></div><div class="t-amt">-89,13</div></button>
       <button class="txn"><div class="grow"><div class="t-main">Xsolla (USA) Inc</div></div><div class="t-amt">-7,49</div></button>
@@ -543,9 +583,9 @@
   </div></div>
   <div class="body">
     <div class="txd-amt" id="txd-amt">&euro; -29,71</div>
-    <div class="txd-saldo" id="txd-saldo">Saldo na boeking &euro; 32.694,53</div>
+    <div class="txd-saldo" id="txd-saldo">Saldo na boeking &euro; 33.689,58</div>
     <div class="txd-field" id="txd-party" hidden><div class="k" id="txd-party-k">Van</div><div class="v" style="display:flex;align-items:flex-start"><div class="grow"><div id="txd-party-name" style="font-weight:600">&nbsp;</div><div id="txd-party-iban" style="font-size:13px;color:var(--grey);margin-top:2px">&nbsp;</div></div><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--wine)" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="10" r="2.4"/><path d="M8 17a4 4 0 0 1 8 0"/><path d="M19 6v4M17 8h4"/></svg></div></div>
-    <div class="txd-field"><div class="k">Datum en tijd</div><div class="v" id="txd-date">Vandaag - 7 oktober 09:07</div></div>
+    <div class="txd-field"><div class="k">Datum en tijd</div><div class="v" id="txd-date">Vandaag - 27 oktober 09:07</div></div>
     <div class="txd-field"><div class="k">Categorie</div><div class="v"><span class="cat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--grey)" stroke-width="1.7"><path d="M3 12l8-8h8v8l-8 8z"/><circle cx="15" cy="9" r="1.3" fill="var(--grey)" stroke="none"/></svg><span id="txd-cat">Internet, TV &amp; bellen</span></span></div></div>
     <div class="txd-field"><div class="k">Omschrijving</div><div class="v" id="txd-desc">Revolut**6007*&nbsp;&nbsp;&gt;Dublin GBP 25,00 KV001 Koers: 0,8532423&nbsp;&nbsp;IERLAND 565338 20261002 12:34:56</div></div>
     <div class="txd-field"><div class="k">Type</div><div class="v" id="txd-type">Betaling</div></div>
@@ -564,13 +604,13 @@
     <div class="appbar-title center">Rekeningdetails</div><div style="width:30px"></div>
   </div></div>
   <div class="body">
-    <div class="kv"><div class="grow"><div class="k">Saldo</div><div class="v big">&euro; 32.694,53</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Saldo</div><div class="v big">&euro; 33.689,58</div></div></div>
     <div class="kv"><div class="grow"><div class="k">Limiet rood staan</div><div class="v">&euro; 0,00</div></div></div>
-    <div class="kv"><div class="grow"><div class="k">Product</div><div class="v">SNS Studentenrekening</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Product</div><div class="v">Jongeren Studentenrekening</div></div></div>
     <div class="kv"><div class="grow"><div class="k">Rekeningnaam</div><div class="v">Marco Meeuwsen PRIVEREKENING</div></div><svg class="act" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
     <div class="kv"><div class="grow"><div class="k">Rekeningnummer</div><div class="v">NL48 SNSB 0948 2771 14</div></div><svg class="act" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></div>
-    <div class="kv"><div class="grow"><div class="k">Bankcode (BIC/SWIFT)</div><div class="v">SNSBNL2A</div></div></div>
-    <div class="kv"><div class="grow"><div class="k">Rekeninghouder</div><div class="v">A. Jansen</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Bankcode (BIC/SWIFT)</div><div class="v">LNDBNL2A</div></div></div>
+    <div class="kv"><div class="grow"><div class="k">Rekeninghouder</div><div class="v">MMCGA Meeuwsen</div></div></div>
     <div class="kv"><div class="grow"><div class="k">Opgebouwde rente</div><div class="v">&euro; 0,00 per maand</div></div></div>
     <div class="detail-head">Rente</div>
     <div class="kv"><div class="grow"><div class="k">Te betalen rente</div><div class="v">&euro; 0,00 per maand</div></div></div>
@@ -597,7 +637,7 @@
       <div style="width:56px;height:38px;border-radius:6px;background:linear-gradient(135deg,#1c7059,#2f9e6f);flex:none;display:grid;place-items:center">
         <svg width="20" height="20" viewBox="0 0 42 40"><path d="M21 3c6 5 10 9 10 16 0 7-5 12-11 12-2 0-4-1-4-3 0-3 4-3 4-7 0-3-3-4-3-8 0-4 2-7 4-10Z" fill="#fff"/></svg>
       </div>
-      <div class="grow"><div class="title">JANSEN A</div><div class="sub">Pasnummer 005</div></div>
+      <div class="grow"><div class="title">VERHOEF S</div><div class="sub">Pasnummer 005</div></div>
     </div>
     <div class="section-label">Veiligheid</div>
     <button class="row divided"><div class="grow"><div class="title">Betaalpas blokkeren</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
@@ -616,7 +656,7 @@
   </div></div>
   <div class="body">
     <div class="section-label">Rekening</div>
-    <button class="row divided"><div class="grow"><div class="title">Marco Meeuwsen PRIVEREKENING</div><div class="sub" style="color:var(--green);font-weight:600">&euro; 32.694,53</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
+    <button class="row divided"><div class="grow"><div class="title">Marco Meeuwsen PRIVEREKENING</div><div class="sub" style="color:var(--green);font-weight:600">&euro; 33.689,58</div></div><svg class="chev chev-svg" width="20" height="20" viewBox="0 0 24 24"><use href="#chev"/></svg></button>
     <div class="section-label">Ingeplande overboekingen</div>
     <div class="empty">
       <svg width="120" height="90" viewBox="0 0 120 90" aria-hidden="true"><circle cx="30" cy="66" r="8" fill="#f4a63a"/><rect x="66" y="30" width="34" height="52" rx="5" fill="#2f9e6f"/><rect x="72" y="38" width="22" height="30" rx="2" fill="#eafaf3"/><path d="M14 78q18-22 40-8" stroke="#2f9e6f" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="92" cy="22" r="6" fill="#f4a63a"/></svg>
@@ -636,7 +676,7 @@
     <div class="info-p">Op deze pagina vind je alle ingeplande en uitgevoerde incasso's. Ook kan je je incasso instellingen wijzigen. <a>Lees alles over incasso's op onze informatiepagina.</a></div>
     <div class="section-label">Selecteer een rekening</div>
     <button class="row" data-goto="kiesrekening" style="margin:0 20px;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;align-items:center;width:calc(100% - 40px)">
-      <div class="grow"><div style="font-size:17px;color:var(--ink);font-weight:700">Marco Meeuwsen PRIVEREKENING &nbsp;&euro; 32.694,53</div><div style="color:var(--green);font-weight:600;font-size:14px;margin-top:3px">NL48 SNSB 0948 2771 14</div></div>
+      <div class="grow"><div style="font-size:17px;color:var(--ink);font-weight:700">Marco Meeuwsen PRIVEREKENING &nbsp;&euro; 33.689,58</div><div style="color:var(--green);font-weight:600;font-size:14px;margin-top:3px">NL48 SNSB 0948 2771 14</div></div>
       <svg class="chev-svg" width="20" height="20" viewBox="0 0 24 24" style="color:var(--ink)"><use href="#chev"/></svg>
     </button>
     <div class="seg" id="inc-seg" style="background:#fff;border-bottom:1px solid var(--line);margin-top:14px">
@@ -697,7 +737,7 @@
   <div class="body">
     <div class="moved-banner">
       <svg width="46" height="40" viewBox="0 0 46 40" style="flex:none"><rect x="4" y="8" width="30" height="22" rx="3" fill="#2f9e6f"/><path d="M4 10l15 10 15-10" fill="none" stroke="#fff" stroke-width="2"/><circle cx="37" cy="10" r="7" fill="#f4a63a"/></svg>
-      <div class="grow"><div style="font-weight:700;font-size:14px;color:#3a2a1a">Berichten zijn verplaatst</div><div style="font-size:12.5px;color:#5a4a38;margin-top:3px;line-height:1.35">Berichten van ASN Bank vind je vanaf nu bij je gebruikersprofiel.</div><div style="color:var(--green);font-weight:600;font-size:13px;margin-top:6px">Ontdek meer</div></div>
+      <div class="grow"><div style="font-weight:700;font-size:14px;color:#3a2a1a">Berichten zijn verplaatst</div><div style="font-size:12.5px;color:#5a4a38;margin-top:3px;line-height:1.35">Berichten van Lindebank vind je vanaf nu bij je gebruikersprofiel.</div><div style="color:var(--green);font-weight:600;font-size:13px;margin-top:6px">Ontdek meer</div></div>
       <span class="x">&times;</span>
     </div>
 
@@ -764,7 +804,7 @@
     <button class="row"><div class="grow"><div class="title" style="font-weight:600">DUO Groningen</div><div class="sub">NL45 INGB 0705 0019 03</div></div></button>
     <button class="row"><div class="grow"><div class="title" style="font-weight:600">J. de Boer</div><div class="sub">NL22 ABNA 0511 2233 44</div></div></button>
     <button class="row"><div class="grow"><div class="title" style="font-weight:600">K. Visser</div><div class="sub">NL18 RABO 0345 6677 88</div></div></button>
-    <button class="row"><div class="grow"><div class="title" style="font-weight:600">L. Smit</div><div class="sub">NL91 SNSB 0708 1122 33</div></div></button>
+    <button class="row"><div class="grow"><div class="title" style="font-weight:600">L. Smit</div><div class="sub">NL91 LNDB 0708 1122 33</div></div></button>
     <button class="row"><div class="grow"><div class="title" style="font-weight:600">T. Jansen</div><div class="sub">BE68 5390 0754 7034</div></div></button>
     <button class="row"><div class="grow"><div class="title" style="font-weight:600">VvE Berkenhof</div><div class="sub">NL77 TRIO 0212 3344 55</div></div></button>
     <button class="row"><div class="grow"><div class="title" style="font-weight:600">Wetec Webshop B.V.</div><div class="sub">NL05 INGB 0009 8877 66</div></div></button>
@@ -837,7 +877,7 @@
     <div class="section-label">Je rekeningen</div>
     <div class="link-green">Volgorde aanpassen</div>
     <div class="acctline"><div class="grow"><div class="nm">Marco Meeuwsen PRIVEREKENING</div><div class="ib">NL48 SNSB 0948 2771 14</div></div><span class="ed" data-goto="rekening-aanpassen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
-    <div class="acctline"><div class="grow"><div class="nm">SNS Basis</div><div class="ib">NL71 SNSB 0559 3020 88</div></div><span class="ed" data-goto="rekening-aanpassen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+    <div class="acctline"><div class="grow"><div class="nm">Linde Basis</div><div class="ib">NL63 LNDB 0987 6543 21</div></div><span class="ed" data-goto="rekening-aanpassen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
   </div>
   <nav class="tabbar" data-tabs="zelf"></nav>
 </section>
@@ -850,7 +890,7 @@
   <div class="body">
     <div class="toggle-row"><div class="grow"><div class="tt">Totaalsaldo sparen tonen</div><div class="ts">Op je overzicht</div></div><span class="switch" data-switch></span></div>
     <div class="section-label">Je rekeningen</div>
-    <div class="acctline"><div class="grow"><div class="nm">Marco Meeuwsen SPAARREKENING</div><div class="ib">NL05 SNSB 0810 4477 63</div></div><span class="ed" data-goto="rekening-aanpassen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+    <div class="acctline"><div class="grow"><div class="nm">Marco Meeuwsen SPAARREKENING</div><div class="ib">NL37 LNDB 0246 8135 79</div></div><span class="ed" data-goto="rekening-aanpassen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
   </div>
   <nav class="tabbar" data-tabs="zelf"></nav>
 </section>
@@ -863,7 +903,7 @@
       <div style="padding:18px 20px 4px">
         <div style="font-size:13px;color:var(--grey)">Rekeningnaam</div>
         <div style="display:flex;align-items:center;border-bottom:1px solid var(--line);padding:8px 0"><div class="grow" style="font-size:16px;color:var(--ink)">Marco Meeuwsen PRIVEREKENING</div><span style="color:var(--grey-2)">&times;</span></div>
-        <div style="font-size:12px;color:var(--grey);margin-top:4px">NL48 SNSB 0948 2771 14 &nbsp;&euro; 32.694,53</div>
+        <div style="font-size:12px;color:var(--grey);margin-top:4px">NL48 SNSB 0948 2771 14 &nbsp;&euro; 33.689,58</div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;padding:18px 20px"><span class="chkbox" data-check style="width:22px;height:22px;border-radius:5px;background:var(--wine);display:grid;place-items:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M5 12l5 5 9-11"/></svg></span><div><div style="font-size:15px;color:var(--ink)">Rekening tonen</div><div style="font-size:12px;color:var(--grey)">Op je overzicht</div></div></div>
       <div style="padding:8px 16px calc(14px + var(--safe-bottom))"><button class="btn btn-primary" data-back style="width:100%">Bevestigen</button></div>
@@ -881,8 +921,8 @@
     <div class="section-label" style="padding-bottom:2px">Apple Pay activeren</div>
     <div class="info-p" style="padding-top:0">Kies met welke rekening(en) je Apple Pay wilt gebruiken.</div>
     <div class="link-green">Hoe werkt Apple Pay?</div>
-    <div class="acctline"><div class="grow"><div class="nm">SNS Studentenrek.</div><div class="ib">NL48 SNSB 0948 2771 14</div><div style="display:flex;align-items:center;gap:5px;margin-top:5px;color:var(--green);font-size:13px;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5 9-11"/></svg>Actief</div></div></div>
-    <div class="acctline"><div class="grow"><div class="nm">SNS Basis</div><div class="ib">NL71 SNSB 0559 3020 88</div><div style="margin-top:5px;color:var(--grey);font-size:13px">Niet actief</div></div>
+    <div class="acctline"><div class="grow"><div class="nm">Linde Studentenrek.</div><div class="ib">NL48 SNSB 0948 2771 14</div><div style="display:flex;align-items:center;gap:5px;margin-top:5px;color:var(--green);font-size:13px;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5 9-11"/></svg>Actief</div></div></div>
+    <div class="acctline"><div class="grow"><div class="nm">Linde Basis</div><div class="ib">NL63 LNDB 0987 6543 21</div><div style="margin-top:5px;color:var(--grey);font-size:13px">Niet actief</div></div>
       <span style="background:#000;color:#fff;border-radius:6px;padding:6px 10px;font-size:11px;display:flex;align-items:center;gap:5px;flex:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M16 3c0 2-1.6 3.7-3.5 3.6C12.3 4.8 14 3 16 3Zm3 14c-.6 1.4-1 2-1.8 3.2-1.1 1.7-2.6 3.8-4.5 3.8-1.7 0-2.1-1.1-4.4-1.1S6 24 4.4 24c-1.9 0-3.3-1.9-4.4-3.6C-2 16.8-1 11 2.6 9c1.3-.7 2.5-.5 3.6-.5 1.3 0 2 .6 3.4.6 1.3 0 2.1-.6 3.6-.6 1 0 2.6.1 3.9 1.5-3.4 2-2.8 6.6.9 7.5Z"/></svg>Wallet</span>
     </div>
     <div style="height:20px"></div>
@@ -957,10 +997,10 @@
       <div class="h">Naar eigen rekeningen</div>
       <div class="kk">Overboeken met Digipas</div>
       <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar tegenrekening andere bank</div><div class="vv">&euro; 250.000</div>
-      <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar eigen rekening bij SNS</div><div class="vv">&euro; 50.000.000</div>
+      <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar eigen rekening bij Lindebank</div><div class="vv">&euro; 50.000.000</div>
       <div class="kk">Overboeken met App</div>
       <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar tegenrekening andere bank</div><div class="vv">&euro; 250.000</div>
-      <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar eigen rekening bij SNS</div><div class="vv">&euro; 1.250.000</div>
+      <div style="font-size:13px;color:var(--grey);margin-top:4px">Naar eigen rekening bij Lindebank</div><div class="vv">&euro; 1.250.000</div>
     </div>
     <div style="height:20px"></div>
   </div>
@@ -976,7 +1016,7 @@
   </div></div>
   <div class="body">
     <div class="search-bar"><svg width="18" height="18" viewBox="0 0 24 24" style="color:var(--grey-2)"><use href="#search"/></svg>Zoeken</div>
-    <button class="row divided" data-back><div class="grow"><div class="title">SNS Basis</div><div class="sub" style="color:var(--green);font-weight:600">NL71 SNSB 0559 3020 88</div></div></button>
+    <button class="row divided" data-back><div class="grow"><div class="title">Linde Basis</div><div class="sub" style="color:var(--green);font-weight:600">NL63 LNDB 0987 6543 21</div></div></button>
     <button class="row" data-back><div class="grow"><div class="title">Marco Meeuwsen PRIVEREKENING</div><div class="sub" style="color:var(--green);font-weight:600">NL48 SNSB 0948 2771 14</div></div></button>
   </div>
   <nav class="tabbar" data-tabs="zelf"></nav>
@@ -992,7 +1032,7 @@
       <div class="ovb-amt">&euro; 0,00</div>
       <div class="ovb-vnlabels"><span>Van</span><span style="flex:0 0 34px"></span><span>Naar</span></div>
       <div class="ovb-vn">
-        <div class="ovb-card"><div class="nm">Marco Meeuwsen PRIVEREKENING</div><div class="bl">&euro; 32.694,53</div></div>
+        <div class="ovb-card"><div class="nm">Marco Meeuwsen PRIVEREKENING</div><div class="bl">&euro; 33.689,58</div></div>
         <div class="ovb-arrow">&rarr;</div>
         <div class="ovb-plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
       </div>
@@ -1152,13 +1192,14 @@
     for(var i=0;i<map.length;i++){ for(var j=0;j<map[i][1].length;j++){ if(d.indexOf(map[i][1][j])>=0) return map[i][0]; } }
     return 'Overig';
   }
-  var CUR_BAL = 32694.53;
+  var CUR_BAL = 33689.58;
   function initTxnSaldo(){
     var panel = document.querySelector('#screen-account [data-panel="txns"]');
     if(!panel) return;
     var rows = [].slice.call(panel.querySelectorAll('.txn'));
     var acc = CUR_BAL;
     rows.forEach(function(t){
+      if(t.classList.contains('res')) return; // reserveringen tellen niet mee in het saldo
       t.__saldo = acc;
       var amtEl = t.querySelector('.t-amt, .pill');
       acc = acc - parseAmt(amtEl ? amtEl.textContent : '0');
@@ -1166,7 +1207,8 @@
   }
   function decodeEntities(s){ var d=document.createElement('textarea'); d.innerHTML=s; return d.value; }
   function openTxn(row){
-    var amtEl = row.querySelector('.t-amt, .pill');
+    var isRes = row.classList.contains('res');
+    var amtEl = row.querySelector('.t-val') || row.querySelector('.t-amt, .pill');
     var amtTxt = amtEl ? amtEl.textContent.trim() : '';
     var pos = !!row.querySelector('.pill') || amtTxt.charAt(0) === '+';
     var mainHtml = row.querySelector('.t-main').innerHTML;
@@ -1176,15 +1218,16 @@
     var prev = row.previousElementSibling;
     while(prev){ if(prev.classList && prev.classList.contains('day-head')){ day = prev.querySelector('span').textContent.trim(); break; } prev = prev.previousElementSibling; }
 
-    document.getElementById('txd-amt').innerHTML = '€ ' + (pos?'+':'') + amtTxt.replace(/^[+-]/,'');
+    document.getElementById('txd-amt').innerHTML = /^[£€]/.test(amtTxt) ? amtTxt : '€ ' + (pos?'+':'') + amtTxt.replace(/^[+-]/,'');
     var saldoEl = document.getElementById('txd-saldo');
     if(typeof row.__saldo === 'number'){ saldoEl.hidden=false; saldoEl.innerHTML = 'Saldo na boeking ' + fmtEUR(row.__saldo); }
     else saldoEl.hidden = true;
     document.getElementById('txd-date').textContent = day + ' 12:' + ('0'+(name.length%59)).slice(-2);
     document.getElementById('txd-cat').textContent = categorize(decodeEntities(mainHtml));
     document.getElementById('txd-desc').innerHTML = fullHtml;
-    var isTerug = !!row.querySelector('.tag');
-    document.getElementById('txd-type').textContent = pos ? (isTerug ? 'Storno (terugboeking)' : 'Overboeking') : (isTerug ? 'Storno (terugboeking)' : 'Incasso / betaling');
+    var tagEl = row.querySelector('.tag');
+    var isTerug = !!tagEl && /terug/i.test(tagEl.textContent);
+    document.getElementById('txd-type').textContent = isRes ? 'Reservering' : pos ? (isTerug ? 'Storno (terugboeking)' : 'Overboeking') : (isTerug ? 'Storno (terugboeking)' : 'Incasso / betaling');
     var party = document.getElementById('txd-party');
     if(pos){
       party.hidden = false;
